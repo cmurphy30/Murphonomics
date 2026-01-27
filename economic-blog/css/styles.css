@@ -1,0 +1,666 @@
+/* ======================================
+   ECONOMIC INSIGHTS DASHBOARD - STYLES
+   CSS for styling the economic dashboard website
+   ====================================== */
+
+/* Remove default browser margins and padding from all elements */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; /* Make sizing calculations easier */
+}
+
+/* CSS VARIABLES: Define colors, fonts, and spacing used throughout the site */
+/* This makes it easy to change the entire look by updating these values */
+:root {
+    /* COLOR PALETTE - Main colors used on the site */
+    --color-primary: #1a1a1a;           /* Dark text color */
+    --color-secondary: #4a4a4a;         /* Medium gray for secondary text */
+    --color-background: #fafafa;        /* Light gray background */
+    --color-surface: #ffffff;           /* White for cards/boxes */
+    --color-border: #e0e0e0;            /* Light gray for borders */
+    --color-accent: #2563eb;            /* Blue for highlights */
+    --color-growth: #10b981;            /* Green for positive indicators */
+    --color-decline: #ef4444;           /* Red for negative indicators */
+    --color-warning: #f59e0b;           /* Orange for warnings */
+    
+    /* FONTS - Typography styles */
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;    /* Regular text font */
+    --font-display: 'Montserrat', sans-serif;                                            /* Bold heading font */
+    
+    /* SPACING - Consistent spacing sizes */
+    --spacing-xs: 0.5rem;      /* Extra small: 8px */
+    --spacing-sm: 1rem;        /* Small: 16px */
+    --spacing-md: 1.5rem;      /* Medium: 24px */
+    --spacing-lg: 2rem;        /* Large: 32px */
+    --spacing-xl: 3rem;        /* Extra large: 48px */
+    
+    /* SHADOWS - Depth effect shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);      /* Subtle shadow */
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);      /* Medium shadow */
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);     /* Strong shadow */
+}
+
+/* ===== BASE STYLES: Default styles for all HTML elements ===== */
+html {
+    /* Enable smooth scrolling when clicking links */
+    scroll-behavior: smooth;
+}
+
+body {
+    /* Set the default font for the entire page */
+    font-family: var(--font-sans);
+    /* Light gray background color */
+    background-color: var(--color-background);
+    /* Dark text color for readability */
+    color: var(--color-primary);
+    /* 1.6 times the font size for spacing between lines (readable) */
+    line-height: 1.6;
+}
+
+/* ===== HEADER STYLES: Top banner section ===== */
+.site-header {
+    /* Dark gradient background for visual appeal */
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    color: white;
+    /* Add padding around the content */
+    padding: var(--spacing-xl) var(--spacing-lg);
+    /* Center text horizontally */
+    text-align: center;
+    /* Add a subtle shadow below the header */
+    box-shadow: var(--shadow-md);
+}
+
+/* Header title styling */
+.header-container h1 {
+    /* Use the bold heading font */
+    font-family: var(--font-display);
+    /* Large size for main title */
+    font-size: 2.5rem;
+    /* Bold weight */
+    font-weight: 700;
+    /* Space below the title */
+    margin-bottom: var(--spacing-sm);
+    /* TigAIN DASHBOARD CONTAINER: Two-column layout ===== */
+.dashboard-container {
+    /* CSS Grid creates a 2-column layout */
+    display: grid;
+    /* Left column is 2x wider than right column (2fr to 1fr) */
+    grid-template-columns: 2fr 1fr;
+    /* Space between columns */
+    gap: var(--spacing-lg);
+    /* Maximum width to prevent stretching on wide screens */
+    max-width: 1400px;
+    /* Center the container horizontally */
+    margin: var(--spacing-xl) auto;
+    /* Add padding on left and right */
+    padding: 0 var(--spacing-lg);
+}
+
+/* ===== LEFT COLUMN: Dashboard area ===== */
+/* Arrange items vertically (stacked) */
+.dashboard-column {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Main dashboard card/widget styling */
+.dashboard-widget {
+    /* White background for the card */
+    background: var(--color-surface);
+    /* Rounded corners */
+    border-radius: 8px;
+    /* Shadow for depth */
+    box-shadow: var(--shadow-lg);
+    /* Padding inside the card */
+    padding: var(--spacing-lg);
+    /* Smooth shadow animation on hover */
+    transition: box-shadow 0.3s ease;
+}
+
+/* Enhance shadow on hover for interactivity */
+.dashboard-widget:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+/* Header section of the widget (title + timestamp) */
+.widget-header {
+    /* Items spread apart (title left, timestamp right) */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* Space below the header */
+    margin-bottom: var(--spacing-lg);
+    /* Padding bel: Where the graph is displayed */
+.chart-container {
+    /* Relative positioning for absolute children */
+    position: relative;
+    /* Fixed height for the chart */
+    height: 400px;
+    /* Space below the chart */
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Loading Spinner: Shown while data is being fetched */
+.loading-spinner {
+    /* Cover the entire chart area */
+    position: absolute;
+    inset: 0;
+    /* Center content vertically and horizontally */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* Semi-transparent white background */
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 4px;
+    /* Display above the chart */
+    z-index: 10;
+}
+
+/* Animated spinner circle */
+.spinner {
+    /* Square size */
+    width: 40px;
+    height: 40px;
+    /* Thick border with blue top */
+    border: 4px solid var(--color-border);
+    border-top-color: var(--color-accent);
+    /* Make it circular */
+    border-radius: 50%;
+    /* Rotate infinitely (animation defined below) */
+    animation: spin 0.8s linear infinite;
+}
+
+/* Animation: Makes the spinner rotate */
+@keyframes spin: Shows what the colors mean */
+.chart-legend {
+    /* Items in a row */
+    display: flex;
+    /* Space between items */
+    gap: var(--spacing-lg);
+    /* Center horizontally */
+    justify-content: center;
+    /* Padding inside */
+    padding: var(--spacing-md);
+    /* Light background */
+    background: var(--color-background);
+    /* Rounded corners */
+    border-radius: 6px;
+}
+
+/* Individual legend item */
+.legend-item {
+    /* Align color box and text */
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    /* Smaller text */
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Color box in legend */
+.legend-color {
+    /* Square shape */
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+/* Green color for growth */
+.legend-color.growth {
+    background-color: var(--color-growth);
+}
+
+/* Red color for decline */
+.legend-color.decline {
+    background-color: var(--color-decline);
+}
+
+/* Error Message: Shows if data fails to load */
+.error-message {
+    /* Padding inside the message box */
+    padding: var(--spacing-md);
+    /* Light red background */
+    background-color: #fee2e2;
+    /* Light red border */
+    border: 1px solid #fecaca;
+    /* Rounded corners */
+    border-radius: 6px;
+    /* Dark red text */
+    color:IGHT SIDEBAR: Vertical column with widgets ===== */
+.sidebar-column {
+    /* Stack items vertically */
+    display: flex;
+    flex-direction: column;
+    /* Space between widgets */
+    gap: var(--spacing-lg);
+}
+
+/* Base styles for sidebar sections */
+.sidebar-widget {
+    /* White background */
+    background: var(--color-surface);
+    /* Rounded corners */
+    border-radius: 8px;
+    /* Shadow for depth */
+    box-shadow: var(--shadow-md);
+    /* Padding inside */
+    padding: var(--spacing-lg);
+    /* Animation on hover: move up and strengthen shadow */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Interactive hover effect */
+.sidebar-widget:hover {
+    /* Lift the widget slightly */
+    transform: translateY(-2px);
+    /* Enhance shadow */
+    box-shadow: var(--shadow-lg);
+}
+
+/* Sidebar section titles */
+.sidebar-widget h3 {
+    /* Bold heading font */
+    font-family: var(--font-display);
+    /* Good size for subheadings */
+    font-size: 1.3rem;
+    font-weight: 600;
+    /* Space below title */
+    margin-bottom: var(--spacing-md);
+    color: var(--color-primary);
+    /* Padding below and border line */
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--color-border);
+}
+
+/* ===== INDICATORS WIDGET: Key economic numbers ===== */
+/* Grid layout for the 3 indicator cards */
+.indicators-grid {
+    /* Three equal columns */
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    /* Space between items */
+    gap: var(--spacing-md);
+}
+
+/* Individual indicator card */
+.indicator-card {
+    /* Light background */
+    background: var(--color-background);
+    /* Padding inside */
+    padding: var(--spacing-md);
+    /* Rounded corners */
+    border-radius: 6px;
+    /* Center text */
+    text-align: center;
+    /* Blue accent line on the left */
+    border-left: 3px solid var(--color-accent);
+}
+===== ARTICLES WIDGET: Featured analysis cards ===== */
+/* Container for article cards */
+.articles-list {
+    /* Stack items vertically */
+    display: flex;
+    flex-direction: column;
+    /* Space between items */
+    gap: var(--spacing-md);
+}
+
+/* Individual article card */
+.article-card {
+    /* Padding inside card */
+    padding: var(--spacing-md);
+    /* Light background */
+    background: var(--color-background);
+    /* Rounded corners */
+    border-radius: 6px;
+    /* Blue line on left */
+    border-left: 3px solid var(--color-accent);
+    /* Smooth animation on interaction */
+    transition: all 0.3s ease;
+    /* Show clickable cursor */
+    cursor: pointer;
+}
+
+/* Hover effect for article cards */
+.article-card:hover {
+    /* Light blue gradient background */
+    background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
+    /* Dark border on hover */
+    border-left-color: var(--color-primary);
+}
+
+/* Tag badge on article (like "Market News") */
+.article-tag {
+    /* Inline badge */
+    display: inline-block;
+    /* Small uppercase text */
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    /* Blue background with white text */
+    background: var(--color-accent);
+    color: white;
+    /* Padding inside the badge */
+    padding: 0.25rem 0.75rem;
+    /* Rounded corners */
+    border-radius: 4px;
+    /* Space below the tag */
+    margin-bottom: var(--spacing-xs);
+}
+
+/* Article headline */
+.article-cOOTER STYLES ===== */
+.site-footer {
+    /* Dark background matching header */
+    background-color: var(--color-primary);
+    color: white;
+    /* Center text */
+    text-align: center;
+    /* Padding around content */
+    padding: var(--spacing-lg);
+    /* Space above the footer */
+    margin-top: var(--spacing-xl);
+    /* Smaller text */
+    font-size: 0.9rem;
+}
+
+/* Footer links styling */
+.site-footer a {
+    /* Blue color */
+    color: var(--color-accent);
+    /* No underline */
+    text-decoration: none;
+    /* Fade effect on hover */
+    transition: opacity 0.3s ease;
+}
+
+/* Footer link hover effect */
+.site-footer a:hover {
+    /* Slightly transparent on hover */
+    opacity: 0.8;
+}
+
+/* ===== RESPONSIVE DESIGN: Adapt to different screen sizes ===== */
+
+/* Tablet screens (768px - 1024px) */
+@media (max-width: 1024px) {
+    /* Smaller header title */
+    .header-container h1 {
+        font-size: 2rem;
+    }
+
+    /* Adjust grid proportions */
+    .dashboard-container {
+        grid-template-columns: 1.5fr 1fr;
+        gap: var(--spacing-md);
+        padding: 0 var(--spacing-md);
+    }
+
+    /* Smaller widget title */
+    .widget-header h2 {
+        font-size: 1.5rem;
+    }
+
+    /* Stack indicators vertically on tablets */
+    .indicators-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Mobile phones (smaller than 768px) */
+@media (max-width: 768px) {
+    /* Stack everything in single column */
+    .dashboard-container {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+        padding: 0 var(--spacing-sm);
+        margin: var(--spacing-lg) auto;
+    }
+
+    /* Smaller header title on mobile */
+    .header-container h1 {
+        font-size: 1.75rem;
+    }
+
+    /* Smaller subtitle */
+    .subtitle {
+        font-size: 0.95rem;
+    }
+
+    /* Adjust widget header layout */
+    .widget-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+
+    /* Smaller widget title on mobile */
+    .widget-header h2 {
+        font-size: 1.3rem;
+    }
+
+    /* Smaller chart on mobile */
+    .chart-container {
+        height: 300px;
+    }
+
+    /* Smaller sidebar heading */
+    .sidebar-widget h3 {
+        font-size: 1.1rem;
+    }
+
+    /* Stack indicator cards vertically */
+    .indicators-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Smaller number values on mobile */
+    .indicator-value {
+        font-size: 1.5rem;
+    }
+
+    /* Reduce padding in cards on mobile */
+    .dashboard-widget,
+    .sidebar-widget {
+        padding: var(--spacing-md);
+    }
+}
+
+/* Small mobile phones (smaller than 480px) */
+@media (max-width: 480px) {
+    /* Smaller header padding */
+    .site-header {
+        padding: var(--spacing-lg) var(--spacing-sm);
+    }
+
+    /* Even smaller header title */
+    .header-container h1 {
+        font-size: 1.5rem;
+    }
+
+    /* Stack legend items vertically on small screens */
+    .chart-legend {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+}
+
+/* ===== ACCESSIBILITY: Respect user preferences ===== */
+
+/* Reduced motion: Disable animations for users who prefer no motion */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        /* Instant animations */
+        animation-duration: 0.01ms !important;
+        /* No animation loops */
+        animation-iteration-count: 1 !important;
+        /* Instant transitions */
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High Contrast Mode: Stronger borders for visibility */
+@media (prefers-contrast: more) {
+    .dashboard-widget,
+    .sidebar-widget {
+        /* Thick dark border */
+        border: 2px solid var(--color-primary);
+    }
+
+    .widget-header {
+        /* Thicker border */
+        border-bottom: 3px solid var(--color-primary);
+    }
+}
+
+/* Dark Mode Support: Automatic dark theme */
+@media (prefers-color-scheme: dark) {
+    /* Update color variables for dark mode */
+    :root {
+        --color-primary: #f5f5f5;        /* Light text for dark bg */
+        --color-secondary: #b0b0b0;      /* Gray text */
+        --color-background: #1a1a1a;     /* Dark background */
+        --color-surface: #2d2d2d;        /* Dark cards */
+        --color-border: #404040;         /* Dark borders */
+    }
+
+    /* Dark header gradient */    font-size: 0.9rem;
+}
+
+.site-footer a {
+    color: var(--color-accent);
+    text-decoration: none;
+    transition: opacity 0.3s ease;
+}
+
+.site-footer a:hover {
+    opacity: 0.8;
+}
+
+/* ===== Responsive Design ===== */
+
+/* Tablet (768px - 1024px) */
+@media (max-width: 1024px) {
+    .header-container h1 {
+        font-size: 2rem;
+    }
+
+    .dashboard-container {
+        grid-template-columns: 1.5fr 1fr;
+        gap: var(--spacing-md);
+        padding: 0 var(--spacing-md);
+    }
+
+    .widget-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .indicators-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Mobile (< 768px) */
+@media (max-width: 768px) {
+    .dashboard-container {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+        padding: 0 var(--spacing-sm);
+        margin: var(--spacing-lg) auto;
+    }
+
+    .header-container h1 {
+        font-size: 1.75rem;
+    }
+
+    .subtitle {
+        font-size: 0.95rem;
+    }
+
+    .widget-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+
+    .widget-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .chart-container {
+        height: 300px;
+    }
+
+    .sidebar-widget h3 {
+        font-size: 1.1rem;
+    }
+
+    .indicators-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .indicator-value {
+        font-size: 1.5rem;
+    }
+
+    .dashboard-widget,
+    .sidebar-widget {
+        padding: var(--spacing-md);
+    }
+}
+
+/* Small Mobile (< 480px) */
+@media (max-width: 480px) {
+    .site-header {
+        padding: var(--spacing-lg) var(--spacing-sm);
+    }
+
+    .header-container h1 {
+        font-size: 1.5rem;
+    }
+
+    .chart-legend {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+}
+
+/* ===== Accessibility ===== */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: more) {
+    .dashboard-widget,
+    .sidebar-widget {
+        border: 2px solid var(--color-primary);
+    }
+
+    .widget-header {
+        border-bottom: 3px solid var(--color-primary);
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-primary: #f5f5f5;
+        --color-secondary: #b0b0b0;
+        --color-background: #1a1a1a;
+        --color-surface: #2d2d2d;
+        --color-border: #404040;
+    }
+
+    .site-header {
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+    }
+}

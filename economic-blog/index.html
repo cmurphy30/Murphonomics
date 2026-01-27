@@ -1,219 +1,157 @@
+<!-- 
+    ECONOMIC INSIGHTS DASHBOARD
+    This is the main HTML page that displays economic data and analysis.
+    It uses CSS for styling and JavaScript for interactive features.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Character encoding and responsive design settings -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="An economic and financial insights blog with in-depth analysis of market trends and economic policy.">
-    <title>Economic Insights - Global Markets & Financial Analysis</title>
-    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Page title shown in browser tab -->
+    <title>Economic Blog - Dashboard</title>
+    
+    <!-- Link to the CSS stylesheet for styling -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Google Fonts: Import Inter (regular font) and Montserrat (bold headings) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="container">
-            <div class="nav-wrapper">
-                <div class="logo">
-                    <h1>Economic Insights</h1>
-                    <p class="tagline">Markets, Economics & Beyond</p>
-                </div>
-                <ul class="nav-menu" id="navMenu">
-                    <li><a href="#home" class="nav-link">Home</a></li>
-                    <li><a href="#markets" class="nav-link">Markets</a></li>
-                    <li><a href="#analysis" class="nav-link">Analysis</a></li>
-                    <li><a href="#featured" class="nav-link">Featured</a></li>
-                    <li><a href="#about" class="nav-link">About</a></li>
-                </ul>
-                <div class="hamburger" id="hamburger">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <header class="hero" id="home">
-        <div class="hero-content">
-            <h2 class="hero-title">Understanding Global Economics</h2>
-            <p class="hero-subtitle">Insights, Analysis, and Market Trends</p>
-        </div>
-        <div class="hero-overlay"></div>
-        <!-- Replace with economic imagery -->
-        <img src="assets/images/hero-placeholder.jpg" alt="Economic trends and market analysis" class="hero-image">
-    </header>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="container">
-            <!-- Featured Post Section -->
-            <section id="featured" class="featured-section">
-                <div class="section-header">
-                    <span class="section-badge">FEATURED</span>
-                    <h2>Latest Economic Analysis</h2>
-                </div>
-
-                <article class="featured-post">
-                    <div class="post-meta">
-                        <time datetime="2026-01-20">January 20, 2026</time>
-                        <span class="category">Markets</span>
+    <!-- HEADER SECTION: Main title and tagline -->
+    <header class="site-header">
+        <div class="header-container">
+            <!-- Website title -->
+            <h1>Economic Insights</h1>
+            <!-- Subtitle describing the site -->
+            <p class="subtitle">Real-time economic indicators and analysis</p>
+     !-- MAIN CONTENT: Two-column layout with dashboard and sidebar -->
+    <main class="dashboard-container">
+        <!-- LEFT COLUMN: Takes up 2/3 of the width and shows the chart -->
+        <section class="dashboard-column">
+            <!-- Widget containing the economic chart -->
+            <div class="dashboard-widget">
+                <!-- Header with title and update timestamp -->
+                <div class="widget-header">
+                    <!-- Chart title -->
+                    <h2>Economic Indicators Dashboard</h2>
+                    <!-- Shows when the data was last refreshed (updated by JavaScript) --
+            <div class="dashboard-widget">
+                <!-- Container for the chart -->
+                <div class="chart-container">
+                    <!-- Loading spinner: shown while data is being fetched -->
+                    <div class="loading-spinner" id="loadingSpinner">
+                        <div class="spinner"></div>
+                        <p>Loading GDP data...</p>
                     </div>
-                    <h3 class="post-title">Global Economic Outlook: Trends and Predictions for 2026</h3>
-                    <p class="post-excerpt">A comprehensive analysis of current market conditions, inflation trends, and what economists predict for the global economy in the coming quarters.</p>
-                    <a href="#" class="read-more">Read Full Article →</a>
-                </article>
-            </section>
-
-            <!-- Posts Grid -->
-            <section id="markets" class="posts-grid">
-                <h2 class="section-title">Market Updates</h2>
-                
-                <div class="filter-buttons" id="filterButtons">
-                    <button class="filter-btn active" data-filter="all">All Posts</button>
-                    <button class="filter-btn" data-filter="stocks">Stocks</button>
-                    <button class="filter-btn" data-filter="crypto">Crypto</button>
-                    <button class="filter-btn" data-filter="policy">Policy</button>
+                    <!-- Canvas element where the chart will be drawn by JavaScript -->
+                    <canvas id="gdpChart"></canvas>
                 </div>
 
-                <div class="posts-container" id="postsContainer">
-                    <article class="post-card" data-category="stocks">
-                        <div class="post-card-header">
-                            <span class="post-category">Stocks</span>
-                        </div>
-                        <h3>Tech Sector Shows Resilience Amid Rate Hikes</h3>
-                        <p>Technology stocks maintain strong performance despite Federal Reserve's latest interest rate decisions.</p>
-                        <div class="post-footer">
-                            <time>Jan 18, 2026</time>
-                            <a href="#" class="post-link">Read →</a>
-                        </div>
+                <!-- Legend explaining the chart colors -->
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <!-- Green color for quarters with economic growth -->
+                        <span class="legend-color growth"></span>
+                        <span>Growth Quarter</span>
+                    </div>
+                    <div class="legend-item">
+                        <!-- Red color for quarters with economic decline -->
+                        <span class="legend-color decline"></span>
+                        <span>Decline Quarter</span>
+                    </div>
+              IGHT COLUMN: Sidebar taking up 1/3 width with key metrics and articles -->
+        <aside class="sidebar-column">
+            <!-- SECTION 1: Key Economic Indicators -->
+            <section class="sidebar-widget indicators-widget">
+                <!-- Section title -->
+                <h3>Key Indicators</h3>
+                <!-- Grid of 3 indicator cards displayed side-by-side -->
+                <div class="indicators-grid">
+                    <!-- Card 1: Inflation Rate -->
+                    <div class="indicator-card">
+                        <label>Inflation Rate</label>
+                        <!-- This value gets filled in by JavaScript -->
+                        <p class="indicator-value" id="inflationRate">--</p>
+                        <span class="indicator-period">YoY</span>
+                    </div>
+                    <!-- Card 2: Unemployment Rate -->
+                    <div class="indicator-card">
+                        <label>Unemployment</label>
+                        <!-- This value gets filled in by JavaScript -->
+                        <p class="indicator-value" id="unemploymentRate">--</p>
+                        <span class="indicator-period">Rate</span>
+                    </div>
+                    <!-- Card 3: Federal Funds Rate -->
+                    <div class="indicator-card">
+                        <label>Fed Funds Rate</label>
+                        <!-- This value gets filled in by JavaScript --
+                    <div class="indicator-card">
+                        <label>Inflation Rate</label>
+                        <p class="indicator-value" id="inflationRate">--</p>
+                 SECTION 2: Featured Analysis Articles -->
+            <section class="sidebar-widget articles-widget">
+                <!-- Section title -->
+                <h3>Featured Analysis</h3>
+                <!-- Container for article cards -->
+                <div class="articles-list" id="articlesList">
+                    <!-- Article 1 -->
+                    <article class="article-card">
+                        <span class="article-tag">Market News</span>
+                        <h4>Understanding Q4 GDP Growth</h4>
+                        <p>Analysis of recent economic trends and what they mean for investors.</p>
                     </article>
-
-                    <article class="post-card" data-category="crypto">
-                        <div class="post-card-header">
-                            <span class="post-category">Crypto</span>
-                        </div>
-                        <h3>Bitcoin Approaches Historical Valuation Milestones</h3>
-                        <p>Digital assets continue their upward trajectory as institutional adoption increases globally.</p>
-                        <div class="post-footer">
-                            <time>Jan 17, 2026</time>
-                            <a href="#" class="post-link">Read →</a>
-                        </div>
+                    <!-- Article 2 -->
+                    <article class="article-card">
+                        <span class="article-tag">Data Insights</span>
+                        <h4>Inflation Trends Explained</h4>
+                        <p>Deep dive into historical inflation patterns and current outlook.</p>
                     </article>
-
-                    <article class="post-card" data-category="policy">
-                        <div class="post-card-header">
-                            <span class="post-category">Policy</span>
-                        </div>
-                        <h3>Trade Policy Updates Shape Market Direction</h3>
-                        <p>New tariff agreements and trade negotiations create both opportunities and challenges for investors.</p>
-                        <div class="post-footer">
-                            <time>Jan 16, 2026</time>
-                            <a href="#" class="post-link">Read →</a>
-                        </div>
-                    </article>
-
-                    <article class="post-card" data-category="stocks">
-                        <div class="post-card-header">
-                            <span class="post-category">Stocks</span>
-                        </div>
-                        <h3>Energy Sector Transformation Accelerates</h3>
-                        <p>Renewable energy companies lead market gains as transition policies strengthen worldwide.</p>
-                        <div class="post-footer">
-                            <time>Jan 15, 2026</time>
-                            <a href="#" class="post-link">Read →</a>
-                        </div>
-                    </article>
-
-                    <article class="post-card" data-category="policy">
-                        <div class="post-card-header">
-                            <span class="post-category">Policy</span>
-                        </div>
-                        <h3>Central Banks Shift Strategy on Inflation</h3>
-                        <p>Recent policy statements suggest a more dovish approach to monetary tightening in developed economies.</p>
-                        <div class="post-footer">
-                            <time>Jan 14, 2026</time>
-                            <a href="#" class="post-link">Read →</a>
-                        </div>
-                    </article>
-
-                    <article class="post-card" data-category="crypto">
-                        <div class="post-card-header">
-                            <span class="post-category">Crypto</span>
-                        </div>
-                        <h3>Regulation Framework Takes Shape Globally</h3>
-                        <p>New cryptocurrency regulations provide clarity for institutional investors entering digital asset markets.</p>
-                        <div class="post-footer">
-                            <time>Jan 13, 2026</time>
-                            <a href="#" class="post-link">Read →</a>
-                        </div>
+                    <!-- Article 3 -->
+                    <article class="article-card">
+                        <span class="article-tag">Analysis</span>
+                        <h4>Fed Policy Impact</h4>
+                        <p>How recent interest rate decisions affect the broader economy.</p>
                     </article>
                 </div>
             </section>
 
-            <!-- Analysis Section -->
-            <section id="analysis" class="analysis-section">
-                <h2 class="section-title">Deep Analysis</h2>
-                <div class="analysis-grid">
-                    <div class="analysis-card">
-                        <h3>Market Indicators</h3>
-                        <p>Track key economic indicators including GDP growth, unemployment rates, inflation trends, and consumer confidence indices that drive market movements.</p>
-                    </div>
-                    <div class="analysis-card">
-                        <h3>Investment Strategies</h3>
-                        <p>Explore various investment approaches for different market conditions, portfolio diversification strategies, and risk management techniques.</p>
-                    </div>
-                    <div class="analysis-card">
-                        <h3>Geopolitical Impact</h3>
-                        <p>Understand how international relations, trade agreements, and geopolitical events influence economic performance and market valuations.</p>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </main>
-
-    <!-- About Section -->
-    <section id="about" class="about-section">
-        <div class="container">
-            <h2>About This Blog</h2>
-            <p>Economic Insights provides in-depth analysis of global markets, economic policy, and financial trends. Our mission is to demystify complex economic concepts and provide actionable insights for investors, policymakers, and anyone interested in understanding the world economy.</p>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>About</h4>
-                    <ul>
-                        <li><a href="#about">Our Story</a></li>
-                        <li><a href="#">Contact</a></li>
-                        <li><a href="#">Subscribe</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Categories</h4>
-                    <ul>
-                        <li><a href="#">Markets</a></li>
-                        <li><a href="#">Analysis</a></li>
-                        <li><a href="#">Policy</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Connect</h4>
-                    <ul>
-                        <li><a href="#">Twitter</a></li>
-                        <li><a href="#">LinkedIn</a></li>
-                        <li><a href="#">RSS Feed</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 Economic Insights. All rights reserved.</p>
-            </div>
-        </div>
+            <!-- SECTION 3: Data Sources Attribution -->
+            <section class="sidebar-widget sources-widget">
+                <!-- Section title -->
+     !-- FOOTER: Copyright and disclaimer information -->
+    <footer class="site-footer">
+        <p>&copy; 2024 Economic Insights. Data sourced from Federal Reserve Economic Data (FRED). <a href="#">Disclaimer</a></p>
     </footer>
 
-    <script src="js/script.js"></script>
+    <!-- SCRIPTS -->
+    <!-- Chart.js library: used to create the interactive chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <!-- Our custom JavaScript file with interactive features --ook.</p>
+                    </article>
+                    <article class="article-card">
+                        <span class="article-tag">Analysis</span>
+                        <h4>Fed Policy Impact</h4>
+                        <p>How recent interest rate decisions affect the broader economy.</p>
+                    </article>
+                </div>
+            </section>
+
+            <!-- Data Sources -->
+            <section class="sidebar-widget sources-widget">
+                <h3>Data Sources</h3>
+                <p class="sources-text">Data provided by Federal Reserve Economic Data (FRED). Updated quarterly.</p>
+            </section>
+        </aside>
+    </main>
+
+    <footer class="site-footer">
+        <p>&copy; 2024 Economic Insights. Data sourced from Federal Reserve Economic Data (FRED). <a href="#">Disclaimer</a></p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
