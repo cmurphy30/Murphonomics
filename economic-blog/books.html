@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Murphenomics - Books, Podcasts, and Stuff</title>
+    <link rel="stylesheet" href="css/styles.css?v=8.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        .books-container {
+            padding: var(--spacing-xl) var(--spacing-xl);
+            min-height: calc(100vh - 60px - 80px);
+        }
+
+        .books-placeholder {
+            background: #ffffff;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+            padding: var(--spacing-xl);
+            text-align: center;
+            color: var(--color-text-tertiary);
+        }
+
+        .books-placeholder h2 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .books-placeholder p {
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVIGATION BAR -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="dashboard.html" class="nav-link">Data Dashboard</a></li>
+                <li><a href="substack.html" class="nav-link substack-btn">Substack</a></li>
+                <li><a href="books.html" class="nav-link active">Books, Podcasts, and Stuff</a></li>
+                <li><a href="#discord" class="nav-link">Discord</a></li>
+            </ul>
+            <div class="social-links">
+                <a href="https://twitter.com" class="social-link" title="Twitter">
+                    <span class="social-icon">𝕏</span>
+                </a>
+                <a href="https://linkedin.com" class="social-link" title="LinkedIn">
+                    <span class="social-icon">in</span>
+                </a>
+                <a href="https://github.com" class="social-link" title="GitHub">
+                    <span class="social-icon">⚙</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="books-container">
+        <div class="books-placeholder">
+            <h2>Books, Podcasts, and Stuff</h2>
+            <p>Content coming soon.</p>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+        <p>&copy; 2024 Economic Insights. Data sourced from Federal Reserve Economic Data (FRED). <a href="#">Disclaimer</a></p>
+    </footer>
+
+</body>
+</html>

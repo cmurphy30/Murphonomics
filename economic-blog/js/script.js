@@ -2,6 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     fetchEconomicData();
+    fetchSubstackPosts();
 });
 
 async function fetchEconomicData() {
@@ -93,7 +94,7 @@ function displayGDPChart(observations) {
     const backgroundColors = values.map((value, index) => {
         if (index === 0) return '#2563eb';
         const change = value - values[index - 1];
-        return change >= 0 ? '#10b981' : '#ef4444';
+        return change >= 0 ? '#3b82f6' : '#1e40af';
     });
     
     const ctx = document.getElementById('gdpChart').getContext('2d');
@@ -120,20 +121,20 @@ function displayGDPChart(observations) {
             scales: {
                 x: {
                     ticks: {
-                        color: 'white',
+                        color: '#1f2937',
                         font: {
                             weight: 500
                         }
                     },
                     grid: {
-                        color: 'rgba(255, 255, 255, 0.1)',
+                        color: 'rgba(30, 64, 175, 0.1)',
                         drawBorder: false
                     }
                 },
                 y: {
                     beginAtZero: false,
                     ticks: {
-                        color: 'white',
+                        color: '#1f2937',
                         font: {
                             weight: 500
                         },
@@ -142,7 +143,7 @@ function displayGDPChart(observations) {
                         }
                     },
                     grid: {
-                        color: 'rgba(255, 255, 255, 0.1)',
+                        color: 'rgba(30, 64, 175, 0.1)',
                         drawBorder: false
                     }
                 }
@@ -188,6 +189,59 @@ function updateIndicatorsMock(inflationData, unemploymentData, fedRateData) {
     document.getElementById('inflationRate').textContent = latestInflation.value + '%';
     document.getElementById('unemploymentRate').textContent = latestUnemployment.value + '%';
     document.getElementById('fedRate').textContent = latestFedRate.value + '%';
+}
+
+async function fetchSubstackPosts() {
+    const container = document.getElementById('substackPosts');
+    if (!container) return;
+
+    try {
+        /* Substack RSS feeds support CORS — fetch directly */
+        const response = await fetch('https://murphonomics.substack.com/feed');
+
+        if (!response.ok) throw new Error('Feed unavailable');
+
+        const text = await response.text();
+        const xml = new DOMParser().parseFromString(text, 'text/xml');
+        const items = Array.from(xml.querySelectorAll('item'));
+
+        if (items.length === 0) {
+            container.innerHTML = '<p class="substack-error">No posts yet. <a href="https://murphonomics.substack.com/" target="_blank" rel="noopener noreferrer">Visit Substack</a> to get started.</p>';
+            return;
+        }
+
+        /* RSS is already newest-first but sort to be safe */
+        const posts = items.map(item => {
+            const rawLink = item.querySelector('link');
+            /* In RSS XML, <link> text is a sibling text node */
+            const link = rawLink ? (rawLink.textContent || rawLink.nextSibling?.nodeValue || '').trim() : '';
+            return {
+                title: item.querySelector('title')?.textContent?.trim() || 'Untitled',
+                link: link || 'https://murphonomics.substack.com/',
+                pubDate: new Date(item.querySelector('pubDate')?.textContent || 0)
+            };
+        }).sort((a, b) => b.pubDate - a.pubDate);
+
+        container.innerHTML = posts.map(post => {
+            const dateStr = post.pubDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            return `
+                <a class="substack-post" href="${post.link}" target="_blank" rel="noopener noreferrer">
+                    <span class="substack-post-date">${dateStr}</span>
+                    <span class="substack-post-title">${post.title}</span>
+                </a>`;
+        }).join('');
+
+    } catch {
+        /* Fallback: show known articles statically (fetch fails on file:// protocol) */
+        const fallbackPosts = [
+            { title: 'The Trump Economy', link: 'https://murphonomics.substack.com/p/the-trump-economy', date: '' }
+        ];
+        container.innerHTML = fallbackPosts.map(post => `
+            <a class="substack-post" href="${post.link}" target="_blank" rel="noopener noreferrer">
+                ${post.date ? `<span class="substack-post-date">${post.date}</span>` : ''}
+                <span class="substack-post-title">${post.title}</span>
+            </a>`).join('');
+    }
 }
 
 function calculateYoYChange(observations) {
