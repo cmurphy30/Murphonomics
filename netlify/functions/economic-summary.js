@@ -1,116 +1,23 @@
 /**
  * economic-summary.js — Netlify serverless function
  *
- * The "smart" function. It:
- *   1. Calls the other three data functions (FRED, BLS, BEA) in parallel
- *   2. Extracts the single most-recent value for each economic indicator
- *   3. Sends that snapshot to the Claude AI API
- *   4. Returns a 500–700 word plain-English economic summary as JSON
+ * Receives a snapshot of current economic data (pre-built by the frontend from
+ * already-fetched FRED/BLS/BEA data) and asks Claude to write a plain-English
+ * economic summary.
  *
- * Because this function calls three external APIs AND the Claude API, it's
- * the most expensive one to run. The front-end caches its result for 24 hours
- * (see js/cache.js) so it only runs once per day per visitor, not on every load.
+ * Why this approach: the old version fetched three APIs AND called Claude in the
+ * same function, which exceeded Netlify's 10-second timeout. Now the frontend
+ * fetches data itself (using fred-data, bls-data, bea-data), extracts the latest
+ * values into a flat "snapshot" object, and POSTs that here. This function only
+ * does one thing: call Claude.
  *
- * Returns:
- *   {
- *     summary:     "Full text of the economic summary...",
- *     generatedAt: "2024-04-12T15:30:00.000Z",
- *     snapshot:    { fedFundsRate: "5.33", headlineCPIYoY: "3.2", ... }
- *   }
- *
- * Called from the browser as: fetch('/.netlify/functions/economic-summary')
+ * Request:  POST with JSON body { snapshot: { fedFundsRate, headlineCPIYoY, ... } }
+ * Response: { summary: "...", generatedAt: "..." }
  */
 
-// Import the other three function handlers directly.
-// This lets us call them in-process without making extra HTTP requests.
-const fredHandler = require('./fred-data');
-const blsHandler  = require('./bls-data');
-const beaHandler  = require('./bea-data');
+// ─── Prompt formatting ───────────────────────────────────────────────────────
 
-// ─── Data gathering ──────────────────────────────────────────────────────────
-
-// Call all three data functions at the same time and return their results.
-// If one fails, we still return the others — the summary will note missing data.
-async function gatherAllData() {
-    const [fredResult, blsResult, beaResult] = await Promise.allSettled([
-        fredHandler.handler({}, {}),
-        blsHandler.handler({}, {}),
-        beaHandler.handler({}, {})
-    ]);
-
-    // Parse each result if it succeeded, or return an error placeholder
-    const parse = result => {
-        if (result.status !== 'fulfilled') {
-            return { error: result.reason?.message || 'Unknown error' };
-        }
-        try {
-            return JSON.parse(result.value.body);
-        } catch {
-            return { error: 'Could not parse response' };
-        }
-    };
-
-    return {
-        fred: parse(fredResult),
-        bls:  parse(blsResult),
-        bea:  parse(beaResult)
-    };
-}
-
-// ─── Snapshot building ───────────────────────────────────────────────────────
-
-// Get the last element of a time series array (the most recent data point)
-function latest(series) {
-    if (!Array.isArray(series) || series.length === 0) return null;
-    return series[series.length - 1].value;
-}
-
-// Format a number to a fixed number of decimal places.
-// Returns 'unavailable' if the value is missing so the prompt stays readable.
-function fmt(value, decimals = 2) {
-    if (value === null || value === undefined || isNaN(value)) return 'unavailable';
-    return Number(value).toFixed(decimals);
-}
-
-// Pull the most recent value from each series into a flat object.
-// This is what gets sent to Claude — one number per indicator, not full histories.
-function buildSnapshot(fred, bls, bea) {
-    return {
-        // GDP
-        realGDPGrowth:       fmt(latest(bea.realGDP)),
-
-        // Inflation
-        headlineCPIYoY:      fmt(latest(bls.headlineCPIYoY)),
-        coreCPIYoY:          fmt(latest(bls.coreCPIYoY)),
-        pceInflationYoY:     fmt(latest(fred.pcepiyoy)),
-        breakevenInflation:  fmt(latest(fred.breakevenInflation)),
-
-        // Labor market
-        lfpr:                fmt(latest(bls.lfpr), 1),
-        avgHourlyEarnings:   fmt(latest(bls.avgHourlyEarnings)),
-        realWageGrowth:      fmt(latest(bls.realWageGrowth)),
-
-        // Monetary policy & rates
-        fedFundsRate:        fmt(latest(fred.fedfunds)),
-        treasury2y:          fmt(latest(fred.dgs2)),
-        treasury10y:         fmt(latest(fred.dgs10)),
-        yieldCurveSpread:    fmt(latest(fred.yieldCurveSpread)),   // 10Y minus 2Y
-        realYield10y:        fmt(latest(fred.realYield10y)),
-
-        // Credit markets
-        igCreditSpread:      fmt(latest(fred.igSpread)),
-        hyCreditSpread:      fmt(latest(fred.hySpread)),
-
-        // Markets & asset prices
-        cape:                fmt(latest(fred.cape), 1),
-        dollarIndex:         fmt(latest(fred.dollarIndex)),
-
-        // Consumer finance
-        debtServiceRatio:    fmt(latest(fred.debtServiceRatio))
-    };
-}
-
-// Format the snapshot as readable labeled text for the Claude prompt
+// Format the snapshot object as labeled text that Claude can read easily
 function formatSnapshotForPrompt(s) {
     return `
 CURRENT ECONOMIC DATA SNAPSHOT:
@@ -149,10 +56,11 @@ Consumer Finance:
 `.trim();
 }
 
-// ─── Handler ────────────────────────────────────────────────────────────────
+// ─── Handler ─────────────────────────────────────────────────────────────────
 
 exports.handler = async function (event, context) {
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    const summaryToken = process.env.SUMMARY_TOKEN;
 
     if (!anthropicKey) {
         return {
@@ -162,17 +70,52 @@ exports.handler = async function (event, context) {
         };
     }
 
+    // Token check — rejects requests that don't include the right x-site-token header.
+    // The token isn't secret (it lives in frontend JS), but it prevents random public
+    // abuse of this endpoint from outside the site.
+    if (summaryToken) {
+        const clientToken = event.headers['x-site-token'];
+        if (clientToken !== summaryToken) {
+            return {
+                statusCode: 401,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ error: 'Unauthorized.' })
+            };
+        }
+    }
+
+    // This function expects a POST request with a snapshot in the body
+    if (event.httpMethod !== 'POST') {
+        return {
+            statusCode: 405,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: 'Method not allowed. Use POST.' })
+        };
+    }
+
+    let snapshot;
     try {
-        // Step 1: Fetch all economic data in parallel
-        const { fred, bls, bea } = await gatherAllData();
+        const body = JSON.parse(event.body || '{}');
+        snapshot = body.snapshot;
+    } catch {
+        return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: 'Invalid JSON in request body.' })
+        };
+    }
 
-        // Step 2: Distill each series down to its most recent value
-        const snapshot = buildSnapshot(fred, bls, bea);
+    if (!snapshot) {
+        return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: 'Request body must include a "snapshot" object.' })
+        };
+    }
 
-        // Step 3: Format the snapshot as labeled text for the prompt
+    try {
         const dataText = formatSnapshotForPrompt(snapshot);
 
-        // Step 4: Ask Claude to write the summary
         const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
             method:  'POST',
             headers: {
@@ -181,10 +124,10 @@ exports.handler = async function (event, context) {
                 'content-type':      'application/json'
             },
             body: JSON.stringify({
-                model:      'claude-opus-4-6',
+                // Sonnet is faster than Opus for a function that needs to finish quickly
+                model:      'claude-sonnet-4-6',
                 max_tokens: 1024,
 
-                // Persona: analytical but accessible economics writer
                 system: `You are an economics writer for Murphonomics, a personal economics blog. Write in a voice that is analytical but accessible — serious and data-driven, but never jargon-heavy. Your reader is intelligent but not an economist.`,
 
                 messages: [
@@ -206,14 +149,11 @@ Include specific numbers. Do not use bullet points — write in full paragraphs.
         });
 
         if (!claudeRes.ok) {
-            // Try to include Claude's error message in our error
             const errText = await claudeRes.text().catch(() => '');
             throw new Error(`Claude API error: HTTP ${claudeRes.status}${errText ? ' — ' + errText : ''}`);
         }
 
         const claudeJson = await claudeRes.json();
-
-        // Claude returns an array of content blocks; we want the first text block
         const summaryText = claudeJson.content[0].text;
 
         return {
@@ -224,8 +164,7 @@ Include specific numbers. Do not use bullet points — write in full paragraphs.
             },
             body: JSON.stringify({
                 summary:     summaryText,
-                generatedAt: new Date().toISOString(),
-                snapshot                          // include the raw numbers for potential front-end use
+                generatedAt: new Date().toISOString()
             })
         };
 
