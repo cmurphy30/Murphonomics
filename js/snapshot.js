@@ -153,7 +153,7 @@
             scales: {
                 x: {
                     ticks: {
-                        maxTicksLimit: 7,
+                        maxTicksLimit: 10,
                         font:         { size: 10, family: "'Inter', sans-serif" },
                         color:        C.gray,
                         maxRotation:  0
