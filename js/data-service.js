@@ -78,7 +78,13 @@ async function fetchSource(source) {
     const response = await fetch(source.endpoint);
 
     if (!response.ok) {
-        throw new Error(`${source.label} returned HTTP ${response.status}`);
+        // Try to read the specific error message from the function's response body
+        let detail = '';
+        try {
+            const errData = await response.json();
+            if (errData.error) detail = ' — ' + errData.error;
+        } catch (_) { /* body wasn't JSON, that's fine */ }
+        throw new Error(`${source.label} returned HTTP ${response.status}${detail}`);
     }
 
     const data = await response.json();

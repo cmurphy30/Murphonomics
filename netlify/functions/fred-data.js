@@ -127,16 +127,27 @@ exports.handler = async function (event, context) {
     };
 
     try {
-        // Fetch all 12 series in parallel — much faster than fetching one at a time
+        // Fetch all 12 series in parallel — much faster than fetching one at a time.
+        // Promise.allSettled means one bad series won't crash the whole function;
+        // it just gets omitted from the response and logged.
         const fetchPromises = Object.entries(seriesMap).map(async ([fredId, key]) => {
             const data = await fetchSeries(fredId, apiKey, observationStart);
             return [key, data];
         });
 
-        const results = await Promise.all(fetchPromises);
+        const settled = await Promise.allSettled(fetchPromises);
 
-        // Turn the array of [key, data] pairs into a plain object
-        const raw = Object.fromEntries(results);
+        // Build the result object, skipping any series that failed
+        const raw = {};
+        settled.forEach(result => {
+            if (result.status === 'fulfilled') {
+                const [key, data] = result.value;
+                raw[key] = data;
+            } else {
+                // Log which specific series failed so it's visible in Netlify function logs
+                console.error('FRED series fetch failed:', result.reason?.message);
+            }
+        });
 
         // ── Derived series ──────────────────────────────────────────────────
 
