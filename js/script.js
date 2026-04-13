@@ -66,6 +66,12 @@ function initHeroAnimation() {
         // ── Subtitle fades out; canvas stays visible as a persistent background ──
         subtitle.style.opacity = Math.max(0, 1 - p * 2.5).toFixed(3);
         if (hint) hint.style.opacity = Math.max(0, 1 - p * 4).toFixed(3);
+
+        // ── Sidebar fades in during the second half of the hero collapse ──
+        // Stays hidden while the hero is prominent; appears with the content.
+        const navOpacity = Math.min(1, Math.max(0, (p - 0.5) * 4));
+        nav.style.opacity       = navOpacity.toFixed(3);
+        nav.style.pointerEvents = navOpacity > 0.05 ? 'auto' : 'none';
     }
 
     function tick() {

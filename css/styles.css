@@ -1136,9 +1136,11 @@ body {
     flex-shrink: 0;
 }
 
-/* Sidenav sits above the hero on the home page */
+/* On the home page the sidenav starts hidden and fades in as the hero
+   collapses. z-index stays below the hero (300) so the hero covers it. */
 .hero-page .sidenav {
-    z-index: 400;
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* Extra breathing room between the sticky header and the dashboard content */
