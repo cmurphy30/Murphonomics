@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Murphonomics</title>
-    <link rel="stylesheet" href="css/styles.css?v=9.4">
+    <link rel="stylesheet" href="css/styles.css?v=9.5">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body class="hero-page">
@@ -25,6 +25,9 @@
             </svg>
         </div>
     </div>
+
+    <!-- Flex row: sidenav column + scrollable page content column -->
+    <div class="page-body">
 
     <!-- SIDEBAR NAVIGATION -->
     <nav class="sidenav" id="sidenav">
@@ -77,6 +80,9 @@
             </a>
         </div>
     </nav>
+
+    <!-- Scrollable content column -->
+    <div class="page-content">
 
     <!-- Spacer: pushes page content below the hero/header -->
     <div class="hero-spacer" id="heroSpacer"></div>
@@ -278,6 +284,9 @@
     <footer class="site-footer">
         <p>&copy; 2025 Murphonomics. Data sourced from Federal Reserve Economic Data (FRED). <a href="#">Disclaimer</a></p>
     </footer>
+
+    </div><!-- /.page-content -->
+    </div><!-- /.page-body -->
 
     <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>

@@ -55,7 +55,18 @@ body {
     background-color: #ffffff;
     color: var(--color-text-primary);
     line-height: 1.6;
-    padding-left: 60px;
+}
+
+/* Page layout — sidenav column + scrollable content column */
+.page-body {
+    display: flex;
+    align-items: flex-start;
+    min-height: 100vh;
+}
+
+.page-content {
+    flex: 1;
+    min-width: 0; /* prevent flex children from overflowing */
 }
 
 /* ========================================
@@ -63,11 +74,12 @@ body {
    ======================================== */
 
 .sidenav {
-    position: fixed;
-    left: 0;
+    position: sticky;
     top: 0;
     height: 100vh;
     width: 60px;
+    flex-shrink: 0;
+    align-self: flex-start;
     background: rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -166,8 +178,6 @@ body {
     z-index: 201;
     color: white;
     padding: 2.5rem var(--spacing-xl) 2rem;
-    padding-left: calc(60px + var(--spacing-xl));
-    margin-left: -60px;
     text-align: left;
     border-bottom: none;
 }
@@ -673,7 +683,6 @@ body {
     text-align: center;
     padding: var(--spacing-lg) var(--spacing-xl);
     margin-top: var(--spacing-xl);
-    margin-left: -60px;
     font-size: 0.9rem;
     border-top: none;
 }
