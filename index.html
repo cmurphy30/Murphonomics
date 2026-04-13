@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Murphonomics</title>
-    <link rel="stylesheet" href="css/styles.css?v=9.7">
+    <link rel="stylesheet" href="css/styles.css?v=9.9">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body class="hero-page">
@@ -87,96 +87,25 @@
     <!-- Spacer: pushes page content below the hero/header -->
     <div class="hero-spacer" id="heroSpacer"></div>
 
-    <!-- MAIN CONTENT: Three-column layout -->
-    <main class="dashboard-container">
-        <!-- LEFT COLUMN: Economic chart (2/3 width) -->
-        <section class="dashboard-column">
-            <div class="dashboard-widget">
-                <div class="widget-header">
-                    <h2>GDP Growth Rate</h2>
-                    <span class="last-updated" id="lastUpdated">Last updated: --</span>
-                </div>
+    <!-- TOP ROW: AI Summary (left) + Substack Posts (right) -->
+    <div class="summary-top-row">
 
-                <div class="chart-container">
-                    <div class="loading-spinner" id="loadingSpinner">
-                        <div class="spinner"></div>
-                        <p>Loading GDP growth data...</p>
-                    </div>
-                    <canvas id="gdpChart"></canvas>
-                </div>
-
-                <div class="chart-legend">
-                    <div class="legend-item">
-                        <span class="legend-color growth"></span>
-                        <span>Growth Quarter</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color decline"></span>
-                        <span>Decline Quarter</span>
-                    </div>
-                </div>
-
-                <div class="error-message" id="errorMessage" style="display: none;"></div>
+        <!-- AI-generated written summary -->
+        <div class="snapshot-summary-block" id="snapshotSummaryBlock">
+            <h3>Murphonomics Economic Summary</h3>
+            <!-- Month label (e.g. "April 2025") — populated by snapshot.js from summaryData.month -->
+            <p class="summary-month" id="summaryMonth"></p>
+            <!-- Loading placeholder replaced by snapshot.js when data arrives -->
+            <div class="summary-text" id="summaryText">
+                <p class="summary-loading-placeholder">Loading summary&hellip;</p>
             </div>
-        </section>
+            <div class="summary-footer">
+                <p class="summary-meta" id="summaryMeta"></p>
+                <a href="market-updates.html" class="snapshot-cta-btn summary-archive-link">View all Market Updates →</a>
+            </div>
+        </div>
 
-        <!-- MIDDLE COLUMN: Sidebar widgets -->
-        <aside class="sidebar-column">
-            <section class="sidebar-widget indicators-widget">
-                <h3>Key Indicators</h3>
-                <div class="indicators-grid">
-                    <div class="indicator-card">
-                        <div class="indicator-card-text">
-                            <label>Inflation Rate</label>
-                            <span class="indicator-period">YoY</span>
-                        </div>
-                        <p class="indicator-value" id="inflationRate">--</p>
-                    </div>
-                    <div class="indicator-card">
-                        <div class="indicator-card-text">
-                            <label>Unemployment</label>
-                            <span class="indicator-period">Rate</span>
-                        </div>
-                        <p class="indicator-value" id="unemploymentRate">--</p>
-                    </div>
-                    <div class="indicator-card">
-                        <div class="indicator-card-text">
-                            <label>Fed Funds Rate</label>
-                            <span class="indicator-period">Target</span>
-                        </div>
-                        <p class="indicator-value" id="fedRate">--</p>
-                    </div>
-                </div>
-            </section>
-
-            <section class="sidebar-widget articles-widget">
-                <h3>Featured Analysis</h3>
-                <div class="articles-list" id="articlesList">
-                    <article class="article-card">
-                        <span class="article-tag">Market News</span>
-                        <h4>Understanding Q4 GDP Growth</h4>
-                        <p>Analysis of recent economic trends and what they mean for investors.</p>
-                    </article>
-                    <article class="article-card">
-                        <span class="article-tag">Data Insights</span>
-                        <h4>Inflation Trends Explained</h4>
-                        <p>Deep dive into historical inflation patterns and current outlook.</p>
-                    </article>
-                    <article class="article-card">
-                        <span class="article-tag">Analysis</span>
-                        <h4>Fed Policy Impact</h4>
-                        <p>How recent interest rate decisions affect the broader economy.</p>
-                    </article>
-                </div>
-            </section>
-
-            <section class="sidebar-widget sources-widget">
-                <h3>Data Sources</h3>
-                <p class="sources-text">Data provided by Federal Reserve Economic Data (FRED). Updated quarterly.</p>
-            </section>
-        </aside>
-
-        <!-- RIGHT COLUMN: Substack Posts -->
+        <!-- Substack Posts -->
         <aside class="substack-column">
             <section class="sidebar-widget substack-widget">
                 <h3>
@@ -190,7 +119,8 @@
                 </div>
             </section>
         </aside>
-    </main>
+
+    </div><!-- /.summary-top-row -->
 
     <!-- ECONOMIC SNAPSHOT SECTION -->
     <section class="snapshot-section">
@@ -261,24 +191,97 @@
 
         </div><!-- /.snapshot-grid -->
 
-        <!-- AI-generated written summary (hidden until data loads) -->
-        <div class="snapshot-summary-block" id="snapshotSummaryBlock" style="display:none">
-            <h3>Murphonomics Economic Summary</h3>
-            <!-- Month label (e.g. "April 2025") — populated by snapshot.js from summaryData.month -->
-            <p class="summary-month" id="summaryMonth"></p>
-            <div class="summary-text" id="summaryText"></div>
-            <div class="summary-footer">
-                <p class="summary-meta" id="summaryMeta"></p>
-                <a href="market-updates.html" class="snapshot-cta-btn summary-archive-link">View all Market Updates →</a>
-            </div>
-        </div>
-
-        <!-- Bottom CTA (hidden until data loads) -->
-        <div class="snapshot-footer-cta" id="snapshotFooterCTA" style="display:none">
-            <a href="dashboard.html" class="snapshot-cta-btn">View Full Dashboard →</a>
-        </div>
-
     </section><!-- /.snapshot-section -->
+
+    <!-- DETAILED DATA: Two-column layout -->
+    <main class="dashboard-container two-col">
+        <!-- LEFT COLUMN: Economic chart (2/3 width) -->
+        <section class="dashboard-column">
+            <div class="dashboard-widget">
+                <div class="widget-header">
+                    <h2>GDP Growth Rate</h2>
+                    <span class="last-updated" id="lastUpdated">Last updated: --</span>
+                </div>
+
+                <div class="chart-container">
+                    <div class="loading-spinner" id="loadingSpinner">
+                        <div class="spinner"></div>
+                        <p>Loading GDP growth data...</p>
+                    </div>
+                    <canvas id="gdpChart"></canvas>
+                </div>
+
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <span class="legend-color growth"></span>
+                        <span>Growth Quarter</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color decline"></span>
+                        <span>Decline Quarter</span>
+                    </div>
+                </div>
+
+                <div class="error-message" id="errorMessage" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- RIGHT COLUMN: Sidebar widgets -->
+        <aside class="sidebar-column">
+            <section class="sidebar-widget indicators-widget">
+                <h3>Key Indicators</h3>
+                <div class="indicators-grid">
+                    <div class="indicator-card">
+                        <div class="indicator-card-text">
+                            <label>Inflation Rate</label>
+                            <span class="indicator-period">YoY</span>
+                        </div>
+                        <p class="indicator-value" id="inflationRate">--</p>
+                    </div>
+                    <div class="indicator-card">
+                        <div class="indicator-card-text">
+                            <label>Unemployment</label>
+                            <span class="indicator-period">Rate</span>
+                        </div>
+                        <p class="indicator-value" id="unemploymentRate">--</p>
+                    </div>
+                    <div class="indicator-card">
+                        <div class="indicator-card-text">
+                            <label>Fed Funds Rate</label>
+                            <span class="indicator-period">Target</span>
+                        </div>
+                        <p class="indicator-value" id="fedRate">--</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="sidebar-widget articles-widget">
+                <h3>Featured Analysis</h3>
+                <div class="articles-list" id="articlesList">
+                    <article class="article-card">
+                        <span class="article-tag">Market News</span>
+                        <h4>Understanding Q4 GDP Growth</h4>
+                        <p>Analysis of recent economic trends and what they mean for investors.</p>
+                    </article>
+                    <article class="article-card">
+                        <span class="article-tag">Data Insights</span>
+                        <h4>Inflation Trends Explained</h4>
+                        <p>Deep dive into historical inflation patterns and current outlook.</p>
+                    </article>
+                    <article class="article-card">
+                        <span class="article-tag">Analysis</span>
+                        <h4>Fed Policy Impact</h4>
+                        <p>How recent interest rate decisions affect the broader economy.</p>
+                    </article>
+                </div>
+            </section>
+
+            <section class="sidebar-widget sources-widget">
+                <h3>Data Sources</h3>
+                <p class="sources-text">Data provided by Federal Reserve Economic Data (FRED). Updated quarterly.</p>
+            </section>
+        </aside>
+    </main>
 
     <!-- FOOTER -->
     <footer class="site-footer">

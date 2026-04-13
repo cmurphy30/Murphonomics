@@ -402,7 +402,8 @@
         const monthEl = document.getElementById('summaryMonth');
 
         if (!summaryData || !summaryData.summary) {
-            block.style.display = 'none';
+            // No data — replace placeholder with a neutral message
+            if (textEl) textEl.innerHTML = '<p style="color:var(--color-text-tertiary)">No summary available yet. Check back after the next monthly update.</p>';
             return;
         }
 
@@ -429,8 +430,6 @@
                 hour: 'numeric', minute: '2-digit'
             });
         }
-
-        block.style.display = 'block';
     }
 
     // ── Main: wire everything together ─────────────────────────────────────
@@ -438,7 +437,6 @@
     async function initSnapshot() {
         const loadingEl = document.getElementById('snapshotLoading');
         const gridEl    = document.getElementById('snapshotGrid');
-        const footerEl  = document.getElementById('snapshotFooterCTA');
         const summaryEl = document.getElementById('snapshotSummaryBlock');
 
         try {
@@ -449,7 +447,6 @@
             // Reveal the grid now that data has arrived (hides the loading spinner)
             if (loadingEl) loadingEl.style.display = 'none';
             if (gridEl)    gridEl.style.display    = 'grid';
-            if (footerEl)  footerEl.style.display  = 'flex';
 
             // Render each panel — missing data sources show '--' rather than crashing
             renderInflation(data.bls, data.fred);
@@ -459,11 +456,7 @@
             renderCAPE(data.fred);
 
             // Render the AI-written summary (may be null if Claude call failed)
-            if (data.summary) {
-                renderSummary(data.summary);
-            } else if (summaryEl) {
-                summaryEl.style.display = 'none';
-            }
+            renderSummary(data.summary);
 
             // Show any non-fatal errors (page still loads, failed sources show '--')
             if (data.errors && data.errors.length > 0) {
