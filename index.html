@@ -4,14 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Murphonomics</title>
-    <link rel="stylesheet" href="css/styles.css?v=9.2">
+    <link rel="stylesheet" href="css/styles.css?v=9.3">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body class="hero-page">
 
+    <!-- Persistent animated background canvas — sits below all page content
+         and stays visible while scrolling. Drawn by startHeroCanvas() in script.js. -->
+    <canvas class="hero-canvas" id="heroCanvas"></canvas>
+
     <!-- HERO SECTION: full-screen intro that compresses into a sticky header on scroll -->
     <div class="hero" id="hero">
-        <canvas class="hero-canvas" id="heroCanvas"></canvas>
         <div class="hero-content">
             <h1 class="hero-title" id="heroTitle">Murphonomics</h1>
             <p class="hero-subtitle" id="heroSubtitle">Real-time economic indicators and analysis</p>

@@ -63,9 +63,8 @@ function initHeroAnimation() {
         const translateY = (FINAL_H / 2 - viewH / 2) * p;          // 0 → ~-366px
         title.style.transform = `translateY(${translateY.toFixed(1)}px) scale(${scale.toFixed(4)})`;
 
-        // ── Subtitle + graph lines fade out ──
+        // ── Subtitle fades out; canvas stays visible as a persistent background ──
         subtitle.style.opacity = Math.max(0, 1 - p * 2.5).toFixed(3);
-        canvas.style.opacity   = Math.max(0, 1 - p * 1.4).toFixed(3);
         if (hint) hint.style.opacity = Math.max(0, 1 - p * 4).toFixed(3);
 
         // ── Sidebar: starts fading in at 15% through animation ──

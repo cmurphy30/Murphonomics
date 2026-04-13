@@ -1046,7 +1046,9 @@ body {
     right: 0;
     height: 100vh;
     z-index: 300;
-    background: linear-gradient(135deg, #0f2d6b 0%, #1a4fa8 60%, #2563eb 100%);
+    /* No background here — body.hero-page supplies the gradient so the canvas
+       (which sits between body and hero in the z-stack) shows through. */
+    background: transparent;
     overflow: hidden;
     display: flex;
     align-items: center;
@@ -1054,12 +1056,15 @@ body {
     will-change: clip-path;
 }
 
+/* Persistent animated line background.
+   Moved outside .hero so it is NOT clipped or faded as the hero scrolls away.
+   z-index: 0 keeps it above the body gradient but below all page content. */
 .hero-canvas {
-    position: absolute;
+    position: fixed;
     inset: 0;
     width: 100%;
     height: 100%;
-    z-index: 1;
+    z-index: 0;
     pointer-events: none;
 }
 
@@ -1192,6 +1197,20 @@ body.hero-page .snapshot-footer-cta .snapshot-cta-btn:hover {
 /* Add top breathing room before the Economic Snapshot section on blue */
 body.hero-page .snapshot-section {
     padding-top: var(--spacing-xl);
+}
+
+/* Lift content sections above the canvas (z-index: 0) so white cards cover it.
+   Transparent gaps between cards will still show the canvas through. */
+body.hero-page .dashboard-container,
+body.hero-page .snapshot-section {
+    position: relative;
+    z-index: 1;
+}
+
+/* Footer also above canvas */
+body.hero-page .site-footer {
+    position: relative;
+    z-index: 1;
 }
 
 @media (max-width: 768px) {
