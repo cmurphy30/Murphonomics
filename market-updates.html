@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Murphonomics - Market Updates</title>
+    <link rel="stylesheet" href="css/styles.css?v=9.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ── Page header ───────────────────────────────────────────────── */
+        .mu-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1e40af 100%);
+            padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .mu-header h1 {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            margin-bottom: 0.4rem;
+        }
+
+        .mu-header p {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.82);
+        }
+
+        /* ── Content container ─────────────────────────────────────────── */
+        .mu-container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-xl) var(--spacing-xl);
+        }
+
+        /* ── Loading / empty states ────────────────────────────────────── */
+        .mu-loading,
+        .mu-empty {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--color-text-tertiary);
+            font-size: 0.95rem;
+        }
+
+        .mu-loading .spinner {
+            margin: 0 auto var(--spacing-sm);
+        }
+
+        .mu-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            padding: var(--spacing-md);
+            color: #b91c1c;
+            font-size: 0.9rem;
+        }
+
+        /* ── Summary cards ─────────────────────────────────────────────── */
+        .mu-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xl);
+        }
+
+        .mu-card {
+            background: #ffffff;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid var(--color-primary);
+            box-shadow: 0 1px 4px rgba(30, 64, 175, 0.07);
+            padding: var(--spacing-lg);
+        }
+
+        .mu-card-heading {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .mu-card-body {
+            font-size: 0.9rem;
+            color: var(--color-text-primary);
+            line-height: 1.7;
+        }
+
+        .mu-card-body p + p {
+            margin-top: var(--spacing-sm);
+        }
+
+        .mu-card-meta {
+            margin-top: var(--spacing-md);
+            font-size: 0.75rem;
+            color: var(--color-text-tertiary);
+        }
+
+        @media (max-width: 768px) {
+            .mu-header {
+                padding: var(--spacing-lg);
+            }
+
+            .mu-header h1 {
+                font-size: 1.7rem;
+            }
+
+            .mu-container {
+                padding: 0 var(--spacing-lg) var(--spacing-xl);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR NAVIGATION -->
+    <nav class="sidenav" id="sidenav">
+        <ul class="sidenav-menu">
+            <li>
+                <a href="index.html" class="sidenav-link">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+                    <span class="sidenav-label">Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="dashboard.html" class="sidenav-link">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+                    <span class="sidenav-label">Data Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="market-updates.html" class="sidenav-link active">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
+                    <span class="sidenav-label">Market Updates</span>
+                </a>
+            </li>
+            <li>
+                <a href="substack.html" class="sidenav-link">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
+                    <span class="sidenav-label">Substack</span>
+                </a>
+            </li>
+            <li>
+                <a href="books.html" class="sidenav-link">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></span>
+                    <span class="sidenav-label">Books, Podcasts & Stuff</span>
+                </a>
+            </li>
+            <li>
+                <a href="#discord" class="sidenav-link">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
+                    <span class="sidenav-label">Discord</span>
+                </a>
+            </li>
+        </ul>
+        <div class="sidenav-social">
+            <a href="https://twitter.com" class="sidenav-social-link" title="X / Twitter">
+                <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></span>
+                <span class="sidenav-label">X / Twitter</span>
+            </a>
+            <a href="https://linkedin.com" class="sidenav-social-link" title="LinkedIn">
+                <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg></span>
+                <span class="sidenav-label">LinkedIn</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- PAGE HEADER -->
+    <header class="mu-header">
+        <h1>Market Updates</h1>
+        <p>Monthly economic summaries, archived</p>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="mu-container">
+
+        <!-- Loading state shown while fetch is in progress -->
+        <div class="mu-loading" id="muLoading">
+            <div class="spinner"></div>
+            <p>Loading summaries&hellip;</p>
+        </div>
+
+        <!-- Error state (hidden by default) -->
+        <div class="mu-error" id="muError" style="display:none"></div>
+
+        <!-- Summary cards rendered here, newest first (hidden until loaded) -->
+        <div class="mu-list" id="muList" style="display:none"></div>
+
+        <!-- Empty state shown if the archive has no entries yet (hidden by default) -->
+        <div class="mu-empty" id="muEmpty" style="display:none">
+            No summaries yet. The first one will appear here after the next monthly generation.
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+        <p>&copy; 2025 Murphonomics. Data sourced from Federal Reserve Economic Data (FRED). <a href="#">Disclaimer</a></p>
+    </footer>
+
+    <!-- SCRIPT: fetch summaries from Netlify Blobs and render cards -->
+    <script>
+        (function () {
+            'use strict';
+
+            const loadingEl = document.getElementById('muLoading');
+            const errorEl   = document.getElementById('muError');
+            const listEl    = document.getElementById('muList');
+            const emptyEl   = document.getElementById('muEmpty');
+
+            // Show one state, hide the others
+            function showState(state) {
+                loadingEl.style.display = state === 'loading' ? 'block' : 'none';
+                errorEl.style.display   = state === 'error'   ? 'block' : 'none';
+                listEl.style.display    = state === 'list'    ? 'flex'  : 'none';
+                emptyEl.style.display   = state === 'empty'   ? 'block' : 'none';
+            }
+
+            // Format an ISO timestamp as "April 12, 2025 at 3:45 PM"
+            function formatDate(isoString) {
+                const d = new Date(isoString);
+                return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                    + ' at '
+                    + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+            }
+
+            // Build one card element from a summary object
+            function buildCard(summary) {
+                const card = document.createElement('article');
+                card.className = 'mu-card';
+
+                // Heading: use the month label if available, fall back to parsing generatedAt
+                const heading = summary.month
+                    || new Date(summary.generatedAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+                // Body: split on double newlines and wrap each paragraph
+                const bodyHtml = (summary.summary || '')
+                    .split(/\n{2,}/)
+                    .filter(p => p.trim())
+                    .map(p => `<p>${p.trim()}</p>`)
+                    .join('');
+
+                card.innerHTML = `
+                    <h2 class="mu-card-heading">${heading}</h2>
+                    <div class="mu-card-body">${bodyHtml}</div>
+                    ${summary.generatedAt
+                        ? `<p class="mu-card-meta">Generated: ${formatDate(summary.generatedAt)}</p>`
+                        : ''}
+                `;
+
+                return card;
+            }
+
+            async function loadSummaries() {
+                showState('loading');
+
+                try {
+                    const response = await fetch('/.netlify/functions/get-summaries');
+
+                    if (!response.ok) {
+                        throw new Error(`Server returned HTTP ${response.status}`);
+                    }
+
+                    const summaries = await response.json();
+
+                    if (!Array.isArray(summaries) || summaries.length === 0) {
+                        showState('empty');
+                        return;
+                    }
+
+                    // Render each summary card, newest first (already sorted by the function)
+                    summaries.forEach(summary => {
+                        listEl.appendChild(buildCard(summary));
+                    });
+
+                    showState('list');
+
+                } catch (err) {
+                    errorEl.textContent = 'Could not load market updates: ' + err.message;
+                    showState('error');
+                    console.error('[market-updates]', err);
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', loadSummaries);
+        }());
+    </script>
+
+</body>
+</html>

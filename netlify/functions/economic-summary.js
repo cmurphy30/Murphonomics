@@ -11,9 +11,15 @@
  * values into a flat "snapshot" object, and POSTs that here. This function only
  * does one thing: call Claude.
  *
+ * After generating a summary, it saves the result to Netlify Blobs under the key
+ * "summary-YYYY-MM" (e.g. "summary-2025-04"). This builds the archive that
+ * get-summaries.js serves to the Market Updates page.
+ *
  * Request:  POST with JSON body { snapshot: { fedFundsRate, headlineCPIYoY, ... } }
- * Response: { summary: "...", generatedAt: "..." }
+ * Response: { summary: "...", generatedAt: "...", month: "April 2025" }
  */
+
+const { getStore } = require('@netlify/blobs');
 
 // ─── Prompt formatting ───────────────────────────────────────────────────────
 
@@ -153,8 +159,27 @@ Include specific numbers. Do not use bullet points — write in full paragraphs.
             throw new Error(`Claude API error: HTTP ${claudeRes.status}${errText ? ' — ' + errText : ''}`);
         }
 
-        const claudeJson = await claudeRes.json();
+        const claudeJson  = await claudeRes.json();
         const summaryText = claudeJson.content[0].text;
+        const now         = new Date();
+        const generatedAt = now.toISOString();
+
+        // Human-readable month label included in the response so the frontend
+        // can display it without re-parsing the ISO timestamp (e.g. "April 2025")
+        const month = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+        // ── Save to Netlify Blobs ─────────────────────────────────────────────
+        // Key format: "summary-YYYY-MM" (e.g. "summary-2025-04").
+        // If a summary for this month already exists it gets overwritten — that's
+        // fine; only one summary per month is expected.
+        // Wrapped in try/catch so a Blobs failure doesn't break the response.
+        try {
+            const store      = getStore('summaries');
+            const monthKey   = `summary-${now.toISOString().slice(0, 7)}`; // "YYYY-MM"
+            await store.setJSON(monthKey, { summary: summaryText, generatedAt, month });
+        } catch (blobErr) {
+            console.warn('economic-summary: failed to save to Blobs:', blobErr.message);
+        }
 
         return {
             statusCode: 200,
@@ -162,10 +187,7 @@ Include specific numbers. Do not use bullet points — write in full paragraphs.
                 'Content-Type':                'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            body: JSON.stringify({
-                summary:     summaryText,
-                generatedAt: new Date().toISOString()
-            })
+            body: JSON.stringify({ summary: summaryText, generatedAt, month })
         };
 
     } catch (err) {

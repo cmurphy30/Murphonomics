@@ -3,33 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Murphenomics - Data Dashboard</title>
+    <title>Murphonomics - Data Dashboard</title>
     <link rel="stylesheet" href="css/styles.css?v=8.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <!-- NAVIGATION BAR -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <ul class="nav-menu">
-                <li><a href="index.html" class="nav-link">Home</a></li>
-                <li><a href="dashboard.html" class="nav-link active">Data Dashboard</a></li>
-                <li><a href="substack.html" class="nav-link substack-btn">Substack</a></li>
-                <li><a href="books.html" class="nav-link">Books, Podcasts, and Stuff</a></li>
-                <li><a href="#discord" class="nav-link">Discord</a></li>
-            </ul>
-            <div class="social-links">
-                <a href="https://twitter.com" class="social-link" title="Twitter">
-                    <span class="social-icon">𝕏</span>
+    <!-- SIDEBAR NAVIGATION -->
+    <nav class="sidenav">
+        <ul class="sidenav-menu">
+            <li>
+                <a href="index.html" class="sidenav-link">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+                    <span class="sidenav-label">Home</span>
                 </a>
-                <a href="https://linkedin.com" class="social-link" title="LinkedIn">
-                    <span class="social-icon">in</span>
+            </li>
+            <li>
+                <a href="dashboard.html" class="sidenav-link active">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+                    <span class="sidenav-label">Data Dashboard</span>
                 </a>
-                <a href="https://github.com" class="social-link" title="GitHub">
-                    <span class="social-icon">⚙</span>
+            </li>
+            <li>
+                <a href="market-updates.html" class="sidenav-link">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
+                    <span class="sidenav-label">Market Updates</span>
                 </a>
-            </div>
+            </li>
+            <li>
+                <a href="substack.html" class="sidenav-link">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
+                    <span class="sidenav-label">Substack</span>
+                </a>
+            </li>
+            <li>
+                <a href="books.html" class="sidenav-link">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></span>
+                    <span class="sidenav-label">Books, Podcasts & Stuff</span>
+                </a>
+            </li>
+            <li>
+                <a href="#discord" class="sidenav-link">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
+                    <span class="sidenav-label">Discord</span>
+                </a>
+            </li>
+        </ul>
+        <div class="sidenav-social">
+            <a href="https://twitter.com" class="sidenav-social-link" title="X / Twitter">
+                <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></span>
+                <span class="sidenav-label">X / Twitter</span>
+            </a>
+            <a href="https://linkedin.com" class="sidenav-social-link" title="LinkedIn">
+                <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg></span>
+                <span class="sidenav-label">LinkedIn</span>
+            </a>
         </div>
     </nav>
 

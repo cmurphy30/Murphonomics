@@ -1,0 +1,9 @@
+{
+  "name": "murphonomics",
+  "version": "1.0.0",
+  "description": "Murphonomics — serverless function dependencies only. The frontend is dependency-free.",
+  "private": true,
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}

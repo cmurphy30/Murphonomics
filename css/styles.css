@@ -967,10 +967,35 @@ body {
     margin-top: var(--spacing-sm);
 }
 
+.summary-month {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.summary-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
 .summary-meta {
     font-size: 0.78rem;
     color: var(--color-text-tertiary);
-    margin-top: var(--spacing-md);
+    margin: 0;
+}
+
+.summary-archive-link {
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    padding: 0.4rem 1rem;
 }
 
 /* Bottom CTA row */

@@ -396,13 +396,20 @@
     // ── Summary block ──────────────────────────────────────────────────────
 
     function renderSummary(summaryData) {
-        const block  = document.getElementById('snapshotSummaryBlock');
-        const textEl = document.getElementById('summaryText');
-        const metaEl = document.getElementById('summaryMeta');
+        const block   = document.getElementById('snapshotSummaryBlock');
+        const textEl  = document.getElementById('summaryText');
+        const metaEl  = document.getElementById('summaryMeta');
+        const monthEl = document.getElementById('summaryMonth');
 
         if (!summaryData || !summaryData.summary) {
             block.style.display = 'none';
             return;
+        }
+
+        // Show the month label (e.g. "April 2025") if it exists in the response.
+        // Older cached summaries may not have this field — handle gracefully.
+        if (monthEl) {
+            monthEl.textContent = summaryData.month || '';
         }
 
         // The summary arrives as plain text with paragraph breaks — wrap each in <p>
