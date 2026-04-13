@@ -1145,7 +1145,19 @@ body {
    Scoped to .hero-page so other pages are unaffected until we roll it out.  */
 
 body.hero-page {
-    background: #1e3a8a;
+    /* Same gradient as the hero, fixed to the viewport so the colours under
+       the hero exactly match the hero itself — no visible seam on scroll. */
+    background: linear-gradient(135deg, #0f2d6b 0%, #1a4fa8 60%, #2563eb 100%);
+    background-attachment: fixed;
+}
+
+/* iOS Safari doesn't support background-attachment:fixed reliably — fall back
+   to a solid mid-blue so it still looks intentional on mobile. */
+@media (max-width: 768px) {
+    body.hero-page {
+        background: #1a4fa8;
+        background-attachment: scroll;
+    }
 }
 
 /* Section header sitting directly on the blue background needs white text */
