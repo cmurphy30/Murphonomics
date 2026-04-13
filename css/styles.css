@@ -68,13 +68,16 @@ body {
     top: 0;
     height: 100vh;
     width: 60px;
-    background: linear-gradient(180deg, #0f2d6b 0%, #1a4fa8 60%, #1e4db5 100%);
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-right: 1px solid rgba(255, 255, 255, 0.18);
     transition: width 250ms ease;
     z-index: 200;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    box-shadow: 2px 0 12px rgba(15, 45, 107, 0.25);
+    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.2);
 }
 
 .sidenav:hover {
@@ -1150,17 +1153,26 @@ body {
    Scoped to .hero-page so other pages are unaffected until we roll it out.  */
 
 body.hero-page {
-    /* Same gradient as the hero, fixed to the viewport so the colours under
-       the hero exactly match the hero itself — no visible seam on scroll. */
-    background: linear-gradient(135deg, #0f2d6b 0%, #1a4fa8 60%, #2563eb 100%);
+    /* Rich multi-stop gradient fixed to the viewport — same colours under the
+       hero as the hero itself (no seam), with more contrast between dark and
+       light stops so the page feels less monotone. */
+    background: linear-gradient(
+        135deg,
+        #020c1b 0%,
+        #0c1f4a 18%,
+        #0f2d6b 36%,
+        #1a4fa8 54%,
+        #1e40af 70%,
+        #2563eb 84%,
+        #1d4ed8 100%
+    );
     background-attachment: fixed;
 }
 
-/* iOS Safari doesn't support background-attachment:fixed reliably — fall back
-   to a solid mid-blue so it still looks intentional on mobile. */
+/* iOS Safari doesn't support background-attachment:fixed reliably */
 @media (max-width: 768px) {
     body.hero-page {
-        background: #1a4fa8;
+        background: linear-gradient(160deg, #020c1b 0%, #0f2d6b 40%, #2563eb 100%);
         background-attachment: scroll;
     }
 }
