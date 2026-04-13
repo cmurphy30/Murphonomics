@@ -7,8 +7,5 @@
   NODE_VERSION = "18"
 
 [functions]
-  node_bundler = "esbuild"
+  # Tell the bundler @netlify/blobs is provided by the Netlify runtime — don't bundle it
   external_node_modules = ["@netlify/blobs"]
-
-[[plugins]]
-  package = "@netlify/plugin-functions-install-core"
