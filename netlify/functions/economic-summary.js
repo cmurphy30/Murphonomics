@@ -17,9 +17,11 @@
  *
  * Request:  POST with JSON body { snapshot: { fedFundsRate, headlineCPIYoY, ... } }
  * Response: { summary: "...", generatedAt: "...", month: "April 2025" }
+ *
+ * NOTE: @netlify/blobs is required lazily (inside the handler) so that a missing
+ * package does not crash the entire function on load. If Blobs storage fails, the
+ * Claude response is still returned — archiving is best-effort.
  */
-
-const { getStore } = require('@netlify/blobs');
 
 // ─── Prompt formatting ───────────────────────────────────────────────────────
 
@@ -65,16 +67,20 @@ Consumer Finance:
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
 exports.handler = async function (event, context) {
+    console.log('[economic-summary] handler invoked, method:', event.httpMethod);
+
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
     const summaryToken = process.env.SUMMARY_TOKEN;
 
     if (!anthropicKey) {
+        console.error('[economic-summary] ANTHROPIC_API_KEY is not set');
         return {
             statusCode: 500,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ error: 'ANTHROPIC_API_KEY environment variable is not set.' })
         };
     }
+    console.log('[economic-summary] API key present, length:', anthropicKey.length);
 
     // Token check — rejects requests that don't include the right x-site-token header.
     // The token isn't secret (it lives in frontend JS), but it prevents random public
@@ -82,6 +88,7 @@ exports.handler = async function (event, context) {
     if (summaryToken) {
         const clientToken = event.headers['x-site-token'];
         if (clientToken !== summaryToken) {
+            console.warn('[economic-summary] token mismatch — got:', clientToken);
             return {
                 statusCode: 401,
                 headers: { 'Content-Type': 'application/json' },
@@ -103,7 +110,9 @@ exports.handler = async function (event, context) {
     try {
         const body = JSON.parse(event.body || '{}');
         snapshot = body.snapshot;
-    } catch {
+        console.log('[economic-summary] snapshot keys:', snapshot ? Object.keys(snapshot).join(', ') : 'missing');
+    } catch (parseErr) {
+        console.error('[economic-summary] failed to parse request body:', parseErr.message);
         return {
             statusCode: 400,
             headers: { 'Content-Type': 'application/json' },
@@ -121,6 +130,7 @@ exports.handler = async function (event, context) {
 
     try {
         const dataText = formatSnapshotForPrompt(snapshot);
+        console.log('[economic-summary] prompt built, calling Claude API...');
 
         const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
             method:  'POST',
@@ -130,9 +140,10 @@ exports.handler = async function (event, context) {
                 'content-type':      'application/json'
             },
             body: JSON.stringify({
-                // Sonnet is faster than Opus for a function that needs to finish quickly
                 model:      'claude-sonnet-4-6',
-                max_tokens: 1024,
+                // 1500 tokens gives comfortable headroom for a 500–700 word response
+                // (700 words ≈ 900 tokens; 1024 was too tight and risked truncation)
+                max_tokens: 1500,
 
                 system: `You are an economics writer for Murphonomics, a personal economics blog. Write in a voice that is analytical but accessible — serious and data-driven, but never jargon-heavy. Your reader is intelligent but not an economist.`,
 
@@ -154,33 +165,47 @@ Include specific numbers. Do not use bullet points — write in full paragraphs.
             })
         });
 
+        console.log('[economic-summary] Claude responded with status:', claudeRes.status);
+
         if (!claudeRes.ok) {
             const errText = await claudeRes.text().catch(() => '');
+            console.error('[economic-summary] Claude error body:', errText);
             throw new Error(`Claude API error: HTTP ${claudeRes.status}${errText ? ' — ' + errText : ''}`);
         }
 
-        const claudeJson  = await claudeRes.json();
+        const claudeJson = await claudeRes.json();
+        console.log('[economic-summary] Claude response stop_reason:', claudeJson.stop_reason,
+            '| output tokens:', claudeJson.usage && claudeJson.usage.output_tokens);
+
+        if (!claudeJson.content || !claudeJson.content[0] || !claudeJson.content[0].text) {
+            console.error('[economic-summary] unexpected Claude response shape:', JSON.stringify(claudeJson).slice(0, 300));
+            throw new Error('Claude returned an unexpected response shape — no content[0].text found');
+        }
+
         const summaryText = claudeJson.content[0].text;
         const now         = new Date();
         const generatedAt = now.toISOString();
 
-        // Human-readable month label included in the response so the frontend
-        // can display it without re-parsing the ISO timestamp (e.g. "April 2025")
+        // Human-readable month label (e.g. "April 2025") included in the response
+        // so the frontend can display it without re-parsing the ISO timestamp
         const month = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
         // ── Save to Netlify Blobs ─────────────────────────────────────────────
+        // @netlify/blobs is required here (not at the top of the file) so that a
+        // missing package does not crash the module on load and break all requests.
         // Key format: "summary-YYYY-MM" (e.g. "summary-2025-04").
-        // If a summary for this month already exists it gets overwritten — that's
-        // fine; only one summary per month is expected.
-        // Wrapped in try/catch so a Blobs failure doesn't break the response.
         try {
-            const store      = getStore('summaries');
-            const monthKey   = `summary-${now.toISOString().slice(0, 7)}`; // "YYYY-MM"
+            const { getStore } = require('@netlify/blobs');
+            const store    = getStore('summaries');
+            const monthKey = `summary-${now.toISOString().slice(0, 7)}`; // "YYYY-MM"
             await store.setJSON(monthKey, { summary: summaryText, generatedAt, month });
+            console.log('[economic-summary] saved to Blobs under key:', monthKey);
         } catch (blobErr) {
-            console.warn('economic-summary: failed to save to Blobs:', blobErr.message);
+            // Non-fatal — log and continue. The Claude response is still returned.
+            console.warn('[economic-summary] failed to save to Blobs:', blobErr.message);
         }
 
+        console.log('[economic-summary] returning success response');
         return {
             statusCode: 200,
             headers: {
@@ -191,7 +216,7 @@ Include specific numbers. Do not use bullet points — write in full paragraphs.
         };
 
     } catch (err) {
-        console.error('economic-summary error:', err.message);
+        console.error('[economic-summary] handler error:', err.message);
         return {
             statusCode: 500,
             headers: { 'Content-Type': 'application/json' },
