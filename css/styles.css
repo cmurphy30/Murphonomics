@@ -80,16 +80,23 @@ body {
     width: 60px;
     flex-shrink: 0;
     align-self: flex-start;
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-right: 1px solid rgba(255, 255, 255, 0.18);
+    background: linear-gradient(180deg, #0c1f4a 0%, #1e40af 100%);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
     transition: width 250ms ease;
     z-index: 200;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     box-shadow: 2px 0 16px rgba(0, 0, 0, 0.2);
+}
+
+/* On the hero page the blue gradient page background shows through,
+   so a frosted glass effect works. Other pages use the solid gradient above. */
+.hero-page .sidenav {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-right: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .sidenav:hover {
@@ -105,7 +112,13 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     margin-bottom: 4px;
     white-space: nowrap;
-    cursor: default;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.2s ease;
+}
+
+.sidenav-logo:hover {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .sidenav-logo-mark {
