@@ -953,9 +953,10 @@ body {
     .snap-dxy       { grid-column: 10 / 13; grid-row: 1 / 4;  }
     .snap-fed       { grid-column: 10 / 13; grid-row: 4 / 7;  }
     .snap-cape      { grid-column: 6 / 10;  grid-row: 6 / 9;  }
-    .snap-yield     { grid-column: 1 / 13;  grid-row: 9 / 13; }
-    .snap-lfpr      { grid-column: 1 / 8;   grid-row: 13 / 18;}
-    .snap-accent    { grid-column: 8 / 13;  grid-row: 13 / 18;}
+    .snap-gdp       { grid-column: 10 / 13; grid-row: 7 / 10; }
+    .snap-yield     { grid-column: 1 / 13;  grid-row: 10 / 14;}
+    .snap-lfpr      { grid-column: 1 / 8;   grid-row: 14 / 19;}
+    .snap-accent    { grid-column: 8 / 13;  grid-row: 14 / 19;}
 }
 
 /* Accent tile — blue decorative card */

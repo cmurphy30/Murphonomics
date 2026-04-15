@@ -340,7 +340,60 @@
         });
     }
 
-    // ── Panel 6: 10Y–2Y Yield Curve Spread ────────────────────────────────
+    // ── Panel 6: Real GDP Growth ──────────────────────────────────────
+    // Quarterly bar chart; bars during recession periods shaded light red
+
+    function renderGDP(bea, fred) {
+        const gdpData = (bea && bea.realGDP) || [];
+        const recSet  = buildRecessionSet(fred && fred.recession);
+        const L       = latest(gdpData);
+
+        document.getElementById('latestGDP').textContent =
+            L ? `${L.value.toFixed(1)}% annualized` : '--';
+        document.getElementById('updatedGDP').textContent =
+            L ? `Last updated: ${fmtQtr(L.date)}` : 'Last updated: --';
+
+        const bgColors = gdpData.map(o => {
+            if (inRecession(o.date, recSet)) return 'rgba(239,68,68,0.45)';
+            return o.value >= 0 ? 'rgba(59,130,246,0.78)' : 'rgba(30,64,175,0.78)';
+        });
+
+        const opts = baseOptions('%');
+        new Chart(document.getElementById('chartGDP'), {
+            type: 'bar',
+            data: {
+                labels: gdpData.map(o => fmtQtr(o.date)),
+                datasets: [{
+                    label:           'Real GDP Growth (annualized)',
+                    data:            gdpData.map(o => o.value),
+                    backgroundColor: bgColors,
+                    borderRadius:    2,
+                    borderWidth:     0
+                }]
+            },
+            options: {
+                ...opts,
+                plugins: {
+                    ...opts.plugins,
+                    legend: {
+                        display: true,
+                        labels: {
+                            generateLabels: () => [
+                                { text: 'Growth',      fillStyle: 'rgba(59,130,246,0.78)', strokeStyle: 'transparent', fontColor: C.gray },
+                                { text: 'Contraction', fillStyle: 'rgba(30,64,175,0.78)',  strokeStyle: 'transparent', fontColor: C.gray },
+                                { text: 'Recession',   fillStyle: 'rgba(239,68,68,0.45)',  strokeStyle: 'transparent', fontColor: C.gray }
+                            ],
+                            font: { family: "'Inter', sans-serif", size: 10 },
+                            boxWidth: 12,
+                            padding:  6
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ── Panel 7: 10Y–2Y Yield Curve Spread ────────────────────────────────
     // Fill below zero in red — an inverted curve historically precedes recessions
 
     function renderYieldCurve(fred) {
@@ -510,6 +563,7 @@
             renderDollarIndex(data.fred);
             renderFed(data.fred);
             renderCAPE(data.fred);
+            renderGDP(data.bea, data.fred);
             renderYieldCurve(data.fred);
             renderLFPR(data.bls);
 
