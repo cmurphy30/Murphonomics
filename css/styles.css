@@ -945,7 +945,8 @@ body {
     margin-bottom: var(--spacing-lg);
 }
 
-.snapshot-panel:first-child {
+.snapshot-panel:first-child,
+.snapshot-panel.wide {
     grid-column: span 2;
 }
 

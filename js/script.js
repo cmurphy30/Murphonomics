@@ -2,7 +2,6 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     initHeroAnimation();
-    fetchEconomicData();
     fetchSubstackPosts();
 });
 

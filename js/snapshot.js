@@ -248,109 +248,56 @@
         });
     }
 
-    // ── Panel 3: Real GDP Growth ───────────────────────────────────────────
-    // Quarterly bar chart; bars during recession periods are shaded light red
+    // ── Panel 3: U.S. Dollar Index (DXY) ─────────────────────────────────────
+    // Daily series collapsed to monthly — higher = stronger dollar
 
-    function renderGDP(bea, fred) {
-        const gdpData = (bea && bea.realGDP) || [];
-        const recSet  = buildRecessionSet(fred && fred.recession);
-        const L       = latest(gdpData);
+    function renderDollarIndex(fred) {
+        const raw     = toMonthlyLast((fred && fred.dollarIndex) || []);
+        const L       = latest(raw);
 
-        document.getElementById('latestGDP').textContent =
-            L ? `${L.value.toFixed(1)}% annualized` : '--';
-        document.getElementById('updatedGDP').textContent =
-            L ? `Last updated: ${fmtQtr(L.date)}` : 'Last updated: --';
+        document.getElementById('latestDollarIndex').textContent =
+            L ? L.value.toFixed(1) : '--';
+        document.getElementById('updatedDollarIndex').textContent =
+            L ? `Last updated: ${fmtMonth(L.date)}` : 'Last updated: --';
 
-        // Color each bar: recession = light red, growth = blue, contraction = dark blue
-        const bgColors = gdpData.map(o => {
-            if (inRecession(o.date, recSet)) return 'rgba(239,68,68,0.45)';
-            return o.value >= 0 ? 'rgba(59,130,246,0.78)' : 'rgba(30,64,175,0.78)';
-        });
+        const labels = raw.map(o => fmtMonth(o.date));
 
-        const opts = baseOptions('%');
-        new Chart(document.getElementById('chartGDP'), {
-            type: 'bar',
+        new Chart(document.getElementById('chartDollarIndex'), {
+            type: 'line',
             data: {
-                labels: gdpData.map(o => fmtQtr(o.date)),
-                datasets: [{
-                    label:           'Real GDP Growth (annualized)',
-                    data:            gdpData.map(o => o.value),
-                    backgroundColor: bgColors,
-                    borderRadius:    2,
-                    borderWidth:     0
-                }]
+                labels,
+                datasets: [
+                    lineDataset('DXY', raw.map(o => o.value), C.primary, {
+                        fill: { target: 'origin', above: 'rgba(30,64,175,0.06)' }
+                    })
+                ]
             },
-            options: {
-                ...opts,
-                plugins: {
-                    ...opts.plugins,
-                    legend: {
-                        display: true,
-                        labels: {
-                            // Custom legend to explain the three bar colors
-                            generateLabels: () => [
-                                { text: 'Growth',      fillStyle: 'rgba(59,130,246,0.78)', strokeStyle: 'transparent', fontColor: C.gray },
-                                { text: 'Contraction', fillStyle: 'rgba(30,64,175,0.78)',  strokeStyle: 'transparent', fontColor: C.gray },
-                                { text: 'Recession',   fillStyle: 'rgba(239,68,68,0.45)',  strokeStyle: 'transparent', fontColor: C.gray }
-                            ],
-                            font: { family: "'Inter', sans-serif", size: 10 },
-                            boxWidth: 12,
-                            padding:  6
-                        }
-                    }
-                }
-            }
+            options: baseOptions('')
         });
     }
 
-    // ── Panel 4: Fed Funds Rate + 2Y/10Y Yield Curve Spread ───────────────
-    // Dual-axis: Fed Funds (left), spread (right)
-    // Fill below zero on the spread — inverted curve = recession warning
+    // ── Panel 4: Fed Funds Rate ────────────────────────────────────────────
 
     function renderFed(fred) {
-        const fedRaw     = (fred && fred.fedfunds) || [];
-        // Yield spread is derived from daily DGS2/DGS10 — collapse to monthly
-        const spreadMonthly = toMonthlyLast((fred && fred.yieldCurveSpread) || []);
-        const spreadAligned = alignValues(fedRaw, spreadMonthly);
-        const L = latest(fedRaw);
+        const fedRaw = (fred && fred.fedfunds) || [];
+        const L      = latest(fedRaw);
 
         document.getElementById('latestFed').textContent =
             L ? `${L.value.toFixed(2)}% fed funds` : '--';
         document.getElementById('updatedFed').textContent =
             L ? `Last updated: ${fmtMonth(L.date)}` : 'Last updated: --';
 
-        const labels = fedRaw.map(o => fmtMonth(o.date));
-
-        // Build options with dual y-axes instead of the default single y
-        const opts = baseOptions('%');
-        delete opts.scales.y;
-        opts.scales.yLeft = {
-            position: 'left',
-            ticks:    { font: { size: 10, family: "'Inter', sans-serif" }, color: C.gray, callback: v => v + '%' },
-            grid:     { color: C.gridLine },
-            border:   { color: '#e2e8f0' }
-        };
-        opts.scales.yRight = {
-            position: 'right',
-            grid:     { drawOnChartArea: false },        // don't double-draw grid lines
-            ticks:    { font: { size: 10, family: "'Inter', sans-serif" }, color: C.gray, callback: v => v + '%' },
-            border:   { color: '#e2e8f0' }
-        };
-
         new Chart(document.getElementById('chartFed'), {
             type: 'line',
             data: {
-                labels,
+                labels: fedRaw.map(o => fmtMonth(o.date)),
                 datasets: [
-                    lineDataset('Fed Funds Rate', fedRaw.map(o => o.value), C.primary, { yAxisID: 'yLeft' }),
-                    lineDataset('2Y/10Y Spread',  spreadAligned, C.red, {
-                        yAxisID: 'yRight',
-                        // Shade below the zero line light red — inverted curve = potential recession signal
-                        fill: { target: { value: 0 }, below: 'rgba(239,68,68,0.13)' }
+                    lineDataset('Fed Funds Rate', fedRaw.map(o => o.value), C.primary, {
+                        fill: { target: 'origin', above: 'rgba(30,64,175,0.06)' }
                     })
                 ]
             },
-            options: opts
+            options: baseOptions('%')
         });
     }
 
@@ -390,6 +337,58 @@
                 ]
             },
             options: baseOptions('')
+        });
+    }
+
+    // ── Panel 6: 10Y–2Y Yield Curve Spread ────────────────────────────────
+    // Fill below zero in red — an inverted curve historically precedes recessions
+
+    function renderYieldCurve(fred) {
+        const raw = toMonthlyLast((fred && fred.yieldCurveSpread) || []);
+        const L   = latest(raw);
+
+        document.getElementById('latestYieldCurve').textContent =
+            L ? `${L.value.toFixed(2)}%` : '--';
+        document.getElementById('updatedYieldCurve').textContent =
+            L ? `Last updated: ${fmtMonth(L.date)}` : 'Last updated: --';
+
+        new Chart(document.getElementById('chartYieldCurve'), {
+            type: 'line',
+            data: {
+                labels: raw.map(o => fmtMonth(o.date)),
+                datasets: [
+                    lineDataset('10Y–2Y Spread', raw.map(o => o.value), C.blue, {
+                        fill: { target: { value: 0 }, below: 'rgba(239,68,68,0.13)', above: 'rgba(16,185,129,0.08)' }
+                    })
+                ]
+            },
+            options: baseOptions('%')
+        });
+    }
+
+    // ── Panel 7: Labor Force Participation Rate ────────────────────────────
+    // Monthly BLS series — % of working-age population employed or actively seeking work
+
+    function renderLFPR(bls) {
+        const raw = (bls && bls.lfpr) || [];
+        const L   = latest(raw);
+
+        document.getElementById('latestLFPR').textContent =
+            L ? `${L.value.toFixed(1)}%` : '--';
+        document.getElementById('updatedLFPR').textContent =
+            L ? `Last updated: ${fmtMonth(L.date)}` : 'Last updated: --';
+
+        new Chart(document.getElementById('chartLFPR'), {
+            type: 'line',
+            data: {
+                labels: raw.map(o => fmtMonth(o.date)),
+                datasets: [
+                    lineDataset('LFPR', raw.map(o => o.value), C.green, {
+                        fill: { target: 'origin', above: 'rgba(16,185,129,0.06)' }
+                    })
+                ]
+            },
+            options: baseOptions('%')
         });
     }
 
@@ -502,9 +501,11 @@
             // Render each panel — missing data sources show '--' rather than crashing
             renderInflation(data.bls, data.fred);
             renderWages(data.bls);
-            renderGDP(data.bea, data.fred);
+            renderDollarIndex(data.fred);
             renderFed(data.fred);
             renderCAPE(data.fred);
+            renderYieldCurve(data.fred);
+            renderLFPR(data.bls);
 
             // Render the AI-written summary (may be null if Claude call failed)
             renderSummary(data.summary);
