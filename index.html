@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Murphonomics</title>
-    <link rel="stylesheet" href="css/styles.css?v=9.9">
+    <link rel="stylesheet" href="css/styles.css?v=10.2">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body class="hero-page">
@@ -24,6 +24,7 @@
                 <polyline points="6 9 12 15 18 9"/>
             </svg>
         </div>
+        <p class="hero-disclaimer" id="heroDisclaimer">For informational purposes only. Nothing on this site constitutes financial, investment, or legal advice. All opinions are my own. Always consult a qualified financial professional before acting on any information presented here.</p>
     </div>
 
     <!-- Flex row: sidenav column + scrollable page content column -->
@@ -31,6 +32,13 @@
 
     <!-- SIDEBAR NAVIGATION -->
     <nav class="sidenav" id="sidenav">
+
+        <!-- Brand mark — fades in as the hero title collapses -->
+        <div class="sidenav-logo" id="sidenavLogo">
+            <span class="sidenav-logo-mark">M</span>
+            <span class="sidenav-label">Murphonomics</span>
+        </div>
+
         <ul class="sidenav-menu">
             <li>
                 <a href="index.html" class="sidenav-link active">
@@ -93,16 +101,22 @@
         <!-- AI-generated written summary -->
         <div class="snapshot-summary-block" id="snapshotSummaryBlock">
             <h3>Murphonomics Economic Summary</h3>
-            <!-- Month label (e.g. "April 2025") — populated by snapshot.js from summaryData.month -->
+            <!-- Month label populated by snapshot.js -->
             <p class="summary-month" id="summaryMonth"></p>
-            <!-- Loading placeholder replaced by snapshot.js when data arrives -->
-            <div class="summary-text" id="summaryText">
-                <p class="summary-loading-placeholder">Loading summary&hellip;</p>
+            <!-- Collapsible wrapper — max-height set by JS after content loads -->
+            <div class="summary-collapsible collapsed" id="summaryCollapsible">
+                <div class="summary-text" id="summaryText">
+                    <p class="summary-loading-placeholder">Loading summary&hellip;</p>
+                </div>
+                <!-- Fade gradient overlay shown in collapsed state -->
+                <div class="summary-fade" id="summaryFade"></div>
             </div>
             <div class="summary-footer">
                 <p class="summary-meta" id="summaryMeta"></p>
                 <a href="market-updates.html" class="snapshot-cta-btn summary-archive-link">View all Market Updates →</a>
             </div>
+            <!-- Expand / collapse toggle -->
+            <button class="summary-toggle-btn" id="summaryToggleBtn">Read Full Market Update ↓</button>
         </div>
 
         <!-- Substack Posts -->
@@ -285,7 +299,8 @@
 
     <!-- FOOTER -->
     <footer class="site-footer">
-        <p>&copy; 2025 Murphonomics. Data sourced from Federal Reserve Economic Data (FRED). <a href="#">Disclaimer</a></p>
+        <p>&copy; 2025 Murphonomics. Data sourced from Federal Reserve Economic Data (FRED).</p>
+        <p class="footer-disclaimer">For informational purposes only. Nothing on this site constitutes financial, investment, or legal advice. All opinions are my own. Always consult a qualified financial professional before acting on any information presented here.</p>
     </footer>
 
     </div><!-- /.page-content -->

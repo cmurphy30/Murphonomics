@@ -97,6 +97,32 @@ body {
 }
 
 
+/* Brand logo at the top of the sidebar */
+.sidenav-logo {
+    display: flex;
+    align-items: center;
+    padding: 16px 18px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    cursor: default;
+}
+
+.sidenav-logo-mark {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 6px;
+}
+
 .sidenav-menu {
     list-style: none;
     padding: 12px 0;
@@ -684,6 +710,16 @@ body {
     border-top: none;
 }
 
+.footer-disclaimer {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.55);
+    margin-top: 0.5rem;
+    line-height: 1.65;
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .site-footer a {
     color: #dbeafe;
     text-decoration: none;
@@ -989,6 +1025,55 @@ body {
     font-style: italic;
 }
 
+/* Collapsible wrapper */
+.summary-collapsible {
+    position: relative;
+    overflow: hidden;
+    transition: max-height 0.45s ease;
+}
+
+/* Fade gradient fades out the text bottom in collapsed state */
+.summary-fade {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: linear-gradient(to bottom, transparent, #ffffff);
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.summary-collapsible.expanded .summary-fade {
+    opacity: 0;
+}
+
+/* Expand / collapse toggle button */
+.summary-toggle-btn {
+    display: block;
+    width: 100%;
+    margin-top: var(--spacing-sm);
+    padding: 0.6rem var(--spacing-md);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 24px;
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    cursor: pointer;
+    text-align: center;
+    letter-spacing: 0.2px;
+    transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.summary-toggle-btn:hover {
+    background: #e8f0fe;
+    box-shadow: 0 2px 8px rgba(30, 64, 175, 0.12);
+    transform: translateY(-1px);
+}
+
 .summary-month {
     font-family: var(--font-display);
     font-size: 1.6rem;
@@ -1128,6 +1213,20 @@ body {
     margin-top: 0.75rem;
     font-weight: 400;
     letter-spacing: 0.3px;
+}
+
+.hero-disclaimer {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(640px, 80%);
+    text-align: center;
+    font-size: 0.7rem;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.38);
+    pointer-events: none;
+    z-index: 2;
 }
 
 .hero-scroll-hint {

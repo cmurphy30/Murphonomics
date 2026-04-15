@@ -19,15 +19,15 @@ function initHeroAnimation() {
     const spacer   = document.getElementById('heroSpacer');
     const title    = document.getElementById('heroTitle');
     const subtitle = document.getElementById('heroSubtitle');
-    const canvas   = document.getElementById('heroCanvas');
-    const hint     = document.getElementById('heroScrollHint');
-    const nav      = document.getElementById('sidenav');
+    const canvas      = document.getElementById('heroCanvas');
+    const hint        = document.getElementById('heroScrollHint');
+    const disclaimer  = document.getElementById('heroDisclaimer');
+    const nav         = document.getElementById('sidenav');
     const navItems = nav.querySelectorAll('.sidenav-menu li');
     const socialEl = nav.querySelector('.sidenav-social');
 
-    const FINAL_H      = 68;    // px — resting header height after animation
+    const FINAL_H      = 0;     // hero fully clips away — no sticky header
     const SCROLL_RANGE = 1225;  // px of scroll to complete the animation
-    const FS_SCALE_END = 1.6 / 5; // title shrinks from 5rem → 1.6rem via transform
 
     // Spacer height is fixed: scroll range + final header height.
     // This ensures content starts exactly at the header bottom when animation ends.
@@ -56,16 +56,20 @@ function initHeroAnimation() {
         const clipBottom = (viewH - FINAL_H) * p;
         hero.style.clipPath = `inset(0 0 ${clipBottom.toFixed(1)}px 0)`;
 
-        // ── Title: scale down AND float upward into header position ──
-        // Without this translateY, the title stays at the vertical center of
-        // the full 100vh hero and vanishes above the visible mask area.
-        const scale      = 1 + (FS_SCALE_END - 1) * p;            // 1.0 → 0.32
-        const translateY = (FINAL_H / 2 - viewH / 2) * p;          // 0 → ~-366px
-        title.style.transform = `translateY(${translateY.toFixed(1)}px) scale(${scale.toFixed(4)})`;
+        // ── Title: shrink and drift toward the sidebar, then fade out ──
+        // Scales to zero and fades out by mid-scroll while drifting upper-left,
+        // giving the impression it's collapsing into the sidebar logo.
+        const scale        = Math.max(0, 1 - p * 1.4);
+        const titleOpacity = Math.max(0, 1 - p * 1.8);
+        const driftX       = -35 * p;
+        const driftY       = -55 * p;
+        title.style.transform = `translate(${driftX.toFixed(1)}px, ${driftY.toFixed(1)}px) scale(${scale.toFixed(4)})`;
+        title.style.opacity   = titleOpacity.toFixed(3);
 
-        // ── Subtitle fades out; canvas stays visible as a persistent background ──
-        subtitle.style.opacity = Math.max(0, 1 - p * 2.5).toFixed(3);
-        if (hint) hint.style.opacity = Math.max(0, 1 - p * 4).toFixed(3);
+        // ── Subtitle, hint, and disclaimer fade out quickly on scroll ──
+        subtitle.style.opacity   = Math.max(0, 1 - p * 2.5).toFixed(3);
+        if (hint)       hint.style.opacity       = Math.max(0, 1 - p * 4).toFixed(3);
+        if (disclaimer) disclaimer.style.opacity = Math.max(0, 1 - p * 3).toFixed(3);
 
         // ── Sidebar fades in during the second half of the hero collapse ──
         // Stays hidden while the hero is prominent; appears with the content.
