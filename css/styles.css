@@ -1495,3 +1495,83 @@ body.hero-page .site-footer {
     }
 }
 
+/* ========================================
+   MOBILE BOTTOM NAVIGATION
+   Hidden on desktop — shown at ≤ 768px
+   ======================================== */
+
+.mobile-bottom-nav {
+    display: none;
+}
+
+@media (max-width: 768px) {
+
+    /* Hide the sidebar entirely on mobile */
+    .sidenav {
+        display: none;
+    }
+
+    /* Fixed bottom tab bar */
+    .mobile-bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 500;
+        background: linear-gradient(180deg, #0c1f4a 0%, #1e40af 100%);
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.3);
+        /* Respect iPhone home-indicator safe area */
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .mobile-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 4px 8px;
+        color: rgba(255, 255, 255, 0.55);
+        text-decoration: none;
+        gap: 3px;
+        -webkit-tap-highlight-color: transparent;
+        transition: color 0.15s ease;
+        min-width: 0;
+    }
+
+    .mobile-nav-item.active {
+        color: #ffffff;
+    }
+
+    .mobile-nav-item svg {
+        width: 22px;
+        height: 22px;
+        flex-shrink: 0;
+    }
+
+    .mobile-nav-label {
+        font-size: 0.58rem;
+        font-weight: 600;
+        text-align: center;
+        white-space: nowrap;
+        letter-spacing: 0.2px;
+    }
+
+    /* Prevent page content from hiding behind the fixed nav bar */
+    .page-content {
+        padding-bottom: calc(64px + env(safe-area-inset-bottom));
+    }
+
+    /* Remove the sidebar left-offset from the hero — sidebar is gone on mobile */
+    .hero-content {
+        padding-left: var(--spacing-lg);
+    }
+
+    /* Fit the title on a phone screen */
+    .hero-title {
+        font-size: 3rem;
+    }
+}
+
