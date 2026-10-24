@@ -28,6 +28,9 @@
     --color-growth: #10b981;
     --color-decline: #ef4444;
     --color-warning: #f59e0b;
+
+    /* HUD tags on the homepage 3D economy (same navy as the mobile nav gradient) */
+    --hud-fill: #0c1f4a;
     
     /* Fonts */
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -1532,6 +1535,9 @@ body.hero-page .site-footer {
 
 .economy-section {
     padding: var(--spacing-lg) var(--spacing-xl);
+    /* Hidden dropdowns of right-side arms would otherwise widen the page;
+       clip sideways only, so panels can still extend above/below. */
+    overflow-x: clip;
 }
 
 .economy-header {
@@ -1558,6 +1564,251 @@ body.hero-page .site-footer {
 .economy-stage canvas:focus-visible {
     outline: 2px solid var(--color-primary-lightest);
     outline-offset: -2px;
+}
+
+/* ─── Economy arms: HUD tags + unfurling chart panels (index.html) ──────────
+   Layers inside #economyStage: canvas (0) → connector lines (1) → arms (2). */
+
+.economy-canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.arm-connectors {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.arm-connectors line {
+    stroke: var(--color-primary-lighter);
+    stroke-width: 1;
+}
+
+.arm-connectors polygon {
+    fill: var(--color-primary-lightest);
+}
+
+.arm-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Hidden until the cloud exists to position them (floating mode only) */
+.economy-section:not(.is-3d):not(.list-mode) .arm-layer,
+.economy-section:not(.is-3d) .arm-connectors {
+    visibility: hidden;
+}
+
+.arm {
+    position: absolute;
+    left: 0;
+    top: 0;
+    will-change: transform;
+    transition: opacity 0.2s ease;
+}
+
+/* Angular HUD tag: navy fill with cut corners + thin offset outline */
+.arm-header {
+    position: relative;
+    isolation: isolate;
+    display: block;
+    pointer-events: auto;
+    border: 0;
+    background: none;
+    color: var(--color-background);
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding: 8px 14px;
+    cursor: pointer;
+}
+
+.arm-header::before,
+.arm-header::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    pointer-events: none;
+}
+
+.arm-header::before {
+    z-index: -1;
+    background: var(--hud-fill);
+    transition: background 0.2s ease;
+}
+
+.arm-header::after {
+    z-index: -2;
+    border: 1px solid var(--color-primary-lighter);
+    transform: translate(3px, 3px);
+}
+
+.arm-header:hover::before,
+.arm.is-open .arm-header::before {
+    background: var(--color-primary);
+}
+
+.arm-header:focus-visible {
+    outline: 2px solid var(--color-primary-lightest);
+    outline-offset: 5px;
+}
+
+/* Dropdown is always laid out at full size (so Chart.js measures correctly)
+   and hidden with visibility + opacity + clip-path, never display:none. */
+.arm-dropdown {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 10px);
+    width: min(520px, 90vw);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto; /* only scrolls when capped to the available viewport room */
+    pointer-events: auto;
+    visibility: hidden;
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    transition: clip-path 0.3s ease-out, opacity 0.3s ease-out, visibility 0s linear 0.3s;
+}
+
+.arm.flip .arm-dropdown {
+    clip-path: inset(100% 0 0 0); /* unfurls upward when flipped above the header */
+}
+
+.arm.is-open .arm-dropdown {
+    visibility: visible;
+    opacity: 1;
+    clip-path: inset(0);
+    transition: clip-path 0.3s ease-out, opacity 0.3s ease-out, visibility 0s;
+}
+
+/* Invisible bridge across the header→panel gap so the cursor can travel */
+.arm.is-open::after {
+    content: '';
+    position: absolute;
+    left: -16px;
+    right: -16px;
+    top: 100%;
+    height: 14px;
+    pointer-events: auto;
+}
+
+.arm.is-open.flip::after {
+    top: auto;
+    bottom: 100%;
+}
+
+/* Neutralize the dashboard bento placement + hover lift inside dropdowns only */
+.arm-dropdown .snapshot-panel,
+.arm-dropdown .snap-blurb {
+    grid-column: auto;
+    grid-row: auto;
+    box-shadow: var(--shadow-lg);
+}
+
+.arm-dropdown .snapshot-panel:hover {
+    transform: none;
+    box-shadow: var(--shadow-lg);
+}
+
+.arm-dropdown .panel-chart-wrap {
+    flex: none;
+    height: 220px;
+}
+
+/* WebGL fallback note (only in no-3d) */
+.economy-note {
+    display: none;
+    margin-bottom: var(--spacing-sm);
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.economy-note a {
+    color: var(--color-background);
+    font-weight: 600;
+}
+
+.economy-section.no-3d .economy-note {
+    display: block;
+}
+
+/* ─── List mode (≤768px, or no-3d): same .arm elements as an accordion ───── */
+
+.list-mode .economy-stage {
+    min-height: 0;
+}
+
+.list-mode .economy-canvas {
+    position: relative;
+    height: 260px;
+    margin-bottom: var(--spacing-sm);
+}
+
+.economy-section.no-3d .economy-canvas,
+.list-mode .arm-connectors {
+    display: none;
+}
+
+.list-mode .arm-layer {
+    position: static;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.list-mode .arm {
+    position: static;
+    transform: none !important;
+    opacity: 1 !important;
+    z-index: auto !important;
+}
+
+.list-mode .arm-header {
+    width: calc(100% - 3px); /* room for the offset outline */
+    text-align: left;
+    padding: 13px 16px;
+}
+
+.list-mode .arm-dropdown {
+    position: static;
+    width: 100%;
+    height: 0;
+    overflow: hidden;
+    opacity: 1;
+    clip-path: none;
+    transition: none;
+}
+
+.list-mode .arm.is-open .arm-dropdown {
+    height: auto;
+    overflow: visible;
+    margin-top: 10px;
+}
+
+.list-mode .arm.is-open::after {
+    display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .arm,
+    .arm-dropdown,
+    .arm.is-open .arm-dropdown {
+        transition: none;
+    }
 }
 
 /* Lift above #heroCanvas like the other homepage sections */

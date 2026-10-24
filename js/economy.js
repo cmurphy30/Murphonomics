@@ -5,32 +5,300 @@
  * created lazily when #economyStage comes within one viewport of the screen.
  * If WebGL is unavailable or creation fails, #economy gets the class "no-3d"
  * and no canvas is created.
+ *
+ * The 11 .arm elements (static HTML, chart panels rendered by snapshot.js) are
+ * either floated around the cloud — positioned every frame from
+ * cloud.project(i) — or, in list mode (≤768px or no-3d), shown as an accordion.
  */
+
+const TAU = Math.PI * 2;
+
+// Clockwise around the rim so related variables sit together; evenly spaced.
+// Order must match the .arm elements in index.html.
+const ARMS = [
+    { key: 'inflation',      title: 'Inflation Comparison' },
+    { key: 'wages',          title: 'Real vs. Nominal Wage Growth' },
+    { key: 'participation',  title: 'Labor Force Participation Rate' },
+    { key: 'gdp',            title: 'Real GDP Growth' },
+    { key: 'debt_service',   title: 'Household Debt Service Ratio' },
+    { key: 'credit_spreads', title: 'Credit Spreads (OAS)' },
+    { key: 'cape',           title: 'Shiller CAPE Ratio' },
+    { key: 'dxy',            title: 'U.S. Dollar Index (DXY)' },
+    { key: 'real_yield',     title: 'Real Yield & Breakeven Inflation' },
+    { key: 'yield_curve',    title: '10Y–2Y Yield Curve Spread' },
+    { key: 'fed_funds',      title: 'Fed Funds Rate' }
+].map((arm, i, all) => ({ ...arm, angle: (i / all.length) * TAU }));
+
+const OPEN_DELAY  = 120; // hover intent
+const CLOSE_GRACE = 250;
+const GAP         = 10;  // px between header and dropdown
+const MARGIN      = 8;   // px kept clear of the viewport edge
+const SVG_NS      = 'http://www.w3.org/2000/svg';
 
 document.addEventListener('DOMContentLoaded', () => {
     const section = document.getElementById('economy');
     const stage   = document.getElementById('economyStage');
-    if (!section || !stage) return;
+    const holder  = document.getElementById('economyCanvas');
+    const svg     = document.getElementById('armConnectors');
+    if (!section || !stage || !holder) return;
 
-    if (!window.EconomyGL || !webglAvailable()) {
-        section.classList.add('no-3d');
-        return;
+    const smallScreen = window.matchMedia('(max-width: 768px)');
+    let cloud = null, openIndex = -1, listMode = false;
+    let raf = 0, onScreen = false, suppressFocusOpen = false;
+    let stageW = 1, stageH = 1;
+
+    // ── Arms: cache elements and build one connector line + diamond each ──
+
+    const arms = ARMS.map((cfg, i) => {
+        const el = stage.querySelector(`.arm[data-arm="${cfg.key}"]`);
+        const line = document.createElementNS(SVG_NS, 'line');
+        const mark = document.createElementNS(SVG_NS, 'polygon');
+        svg.appendChild(line);
+        svg.appendChild(mark);
+        return {
+            ...cfg, i, el, line, mark,
+            header:   el.querySelector('.arm-header'),
+            dropdown: el.querySelector('.arm-dropdown'),
+            w: 0, h: 0, hover: false, opened: false, openT: 0, closeT: 0
+        };
+    });
+
+    function measure() {
+        stageW = holder.clientWidth || 1;
+        stageH = holder.clientHeight || 1;
+        arms.forEach(a => { a.w = a.header.offsetWidth; a.h = a.header.offsetHeight; });
     }
 
-    const observer = new IntersectionObserver((entries) => {
+    // ── Floating positions, every frame from cloud.project(i) ─────────────
+
+    function positionArms() {
+        const cx = stageW / 2, cy = stageH / 2;
+        for (const a of arms) {
+            const p = cloud.project(a.i);
+            const dx = p.x - cx, dy = p.y - cy, len = Math.hypot(dx, dy) || 1;
+            // Header sits just outside the anchor, nudged upward
+            let hx = p.x + (dx / len) * 34;
+            let hy = p.y + (dy / len) * 22 - 16;
+            hx = Math.min(Math.max(hx, a.w / 2 + 6), stageW - a.w / 2 - 6);
+            hy = Math.min(Math.max(hy, a.h / 2 + 6), stageH - a.h / 2 - 6);
+
+            const alpha = p.visible ? 1 : 0.35; // back-facing arms dim but stay hoverable
+            a.el.style.transform = `translate3d(${(hx - a.w / 2).toFixed(1)}px, ${(hy - a.h / 2).toFixed(1)}px, 0)`;
+            a.el.style.opacity   = a.i === openIndex ? 1 : alpha;
+            a.el.style.zIndex    = a.i === openIndex ? 1000000 : Math.round((1 - p.depth) * 100000); // open arm always on top
+
+            a.line.setAttribute('x1', p.x.toFixed(1)); a.line.setAttribute('y1', p.y.toFixed(1));
+            a.line.setAttribute('x2', hx.toFixed(1));  a.line.setAttribute('y2', hy.toFixed(1));
+            a.line.setAttribute('opacity', alpha);
+            const x = p.x, y = p.y;
+            a.mark.setAttribute('points', `${x},${y - 4} ${x + 4},${y} ${x},${y + 4} ${x - 4},${y}`);
+            a.mark.setAttribute('opacity', alpha);
+        }
+    }
+
+    function loop() {
+        raf = 0;
+        if (!running()) return;
+        positionArms();
+        raf = requestAnimationFrame(loop);
+    }
+
+    function running() { return cloud && !listMode && onScreen && !document.hidden; }
+    function startLoop() { if (!raf && running()) raf = requestAnimationFrame(loop); }
+    function stopLoop()  { if (raf) cancelAnimationFrame(raf); raf = 0; }
+
+    // ── Open / close ──────────────────────────────────────────────────────
+
+    function resizeCharts(a) {
+        if (!window.Chart) return;
+        a.dropdown.querySelectorAll('canvas').forEach(c => {
+            const chart = Chart.getChart(c);
+            if (chart) chart.resize();
+        });
+    }
+
+    // Clamp horizontally inside the viewport; flip above if there is no room below
+    function placeDropdown(a) {
+        const dd = a.dropdown;
+        dd.style.maxHeight = '';
+        if (listMode) { dd.style.left = ''; dd.style.top = ''; return; }
+        const hr  = a.header.getBoundingClientRect();
+        const ddW = dd.offsetWidth, ddH = dd.offsetHeight;
+        const sr = section.getBoundingClientRect(); // section clips sideways overflow
+        const minLeft = Math.max(MARGIN, sr.left + MARGIN);
+        const maxLeft = Math.min(window.innerWidth, sr.right) - ddW - MARGIN;
+        let left = hr.left + hr.width / 2 - ddW / 2;
+        left = Math.min(Math.max(left, minLeft), maxLeft);
+
+        const below = window.innerHeight - hr.bottom - GAP - MARGIN;
+        const above = hr.top - GAP - MARGIN;
+        const flip  = ddH > below && above > below;
+        // Taller than the room on either side: cap it and let it scroll inside
+        const room  = Math.floor(flip ? above : below);
+        const h     = Math.min(ddH, room);
+        if (ddH > room) dd.style.maxHeight = room + 'px';
+        dd.style.left = (left - hr.left).toFixed(1) + 'px';
+        dd.style.top  = (flip ? -(h + GAP) : hr.height + GAP) + 'px';
+        a.el.classList.toggle('flip', flip);
+    }
+
+    // Emphasis follows hover/open; rotation pauses while any arm is hovered or
+    // open, so headers hold still under the cursor during the hover-intent delay
+    function setEmphasis(a) {
+        if (!cloud) return;
+        cloud.setEmphasis(a.i, a.hover || a.i === openIndex ? 1 : 0);
+        cloud.setPaused(openIndex >= 0 || arms.some(x => x.hover));
+    }
+
+    function open(i) {
+        if (openIndex === i) return;
+        if (openIndex >= 0) close(openIndex);
+        const a = arms[i];
+        openIndex = i;
+        placeDropdown(a);
+        a.el.classList.add('is-open');
+        a.header.setAttribute('aria-expanded', 'true');
+        setEmphasis(a);
+        if (!a.opened || listMode) {
+            a.opened = true;
+            requestAnimationFrame(() => resizeCharts(a));
+        }
+        if (!listMode) positionArms();
+    }
+
+    function close(i) {
+        if (openIndex !== i) return;
+        const a = arms[i];
+        clearTimeout(a.openT);
+        openIndex = -1;
+        a.el.classList.remove('is-open');
+        a.header.setAttribute('aria-expanded', 'false');
+        setEmphasis(a);
+    }
+
+    // ── Events ────────────────────────────────────────────────────────────
+
+    arms.forEach(a => {
+        let lastPointer = '';
+
+        // Hover intent (mouse/pen only; touch uses tap)
+        a.el.addEventListener('pointerenter', e => {
+            if (e.pointerType === 'touch' || listMode) return;
+            clearTimeout(a.closeT);
+            a.hover = true; setEmphasis(a);
+            if (openIndex !== a.i) a.openT = setTimeout(() => open(a.i), OPEN_DELAY);
+        });
+        a.el.addEventListener('pointerleave', e => {
+            if (e.pointerType === 'touch' || listMode) return;
+            clearTimeout(a.openT);
+            a.hover = false; setEmphasis(a);
+            a.closeT = setTimeout(() => close(a.i), CLOSE_GRACE);
+        });
+
+        a.header.addEventListener('pointerdown', e => { lastPointer = e.pointerType; });
+        a.header.addEventListener('click', () => {
+            // A mouse hover already opened it; a click shouldn't snap it shut
+            const keepOpen = lastPointer === 'mouse' && !listMode;
+            lastPointer = '';
+            if (openIndex === a.i) { if (!keepOpen) close(a.i); }
+            else { clearTimeout(a.openT); open(a.i); }
+        });
+
+        // Keyboard: focus opens (floating mode), Tab continues into the panel
+        a.header.addEventListener('focus', () => {
+            if (suppressFocusOpen || listMode) return;
+            let keyboard = true;
+            try { keyboard = a.header.matches(':focus-visible'); } catch (_) {}
+            if (keyboard) open(a.i);
+        });
+        a.el.addEventListener('focusout', e => {
+            // Only when focus moves to something else (clicking a chart blurs to nothing)
+            if (!listMode && e.relatedTarget && !a.el.contains(e.relatedTarget)) close(a.i);
+        });
+
+        // Resize charts once the unfurl finishes
+        a.dropdown.addEventListener('transitionend', e => {
+            if (e.target === a.dropdown && e.propertyName === 'clip-path' && a.i === openIndex) resizeCharts(a);
+        });
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape' || openIndex < 0) return;
+        const a = arms[openIndex];
+        close(openIndex);
+        suppressFocusOpen = true;
+        a.header.focus();
+        suppressFocusOpen = false;
+    });
+
+    // Tap/click outside closes (floating mode)
+    document.addEventListener('pointerdown', e => {
+        if (openIndex >= 0 && !listMode && !arms[openIndex].el.contains(e.target)) close(openIndex);
+    });
+
+    document.addEventListener('visibilitychange', () => { if (document.hidden) stopLoop(); else startLoop(); });
+
+    // ── Layout mode: floating around the cloud, or list (≤768px / no-3d) ──
+
+    function updateMode() {
+        const list = smallScreen.matches || section.classList.contains('no-3d');
+        if (list === listMode && section.classList.contains('mode-set')) return;
+        section.classList.add('mode-set');
+        listMode = list;
+        if (openIndex >= 0) close(openIndex);
+        section.classList.toggle('list-mode', list);
+        if (list) {
+            stopLoop();
+            arms.forEach(a => {
+                a.el.style.transform = a.el.style.opacity = a.el.style.zIndex = '';
+                a.dropdown.style.left = a.dropdown.style.top = a.dropdown.style.maxHeight = '';
+            });
+        } else {
+            measure();
+            startLoop();
+        }
+    }
+
+    if (smallScreen.addEventListener) smallScreen.addEventListener('change', updateMode);
+    else smallScreen.addListener(updateMode);
+
+    new ResizeObserver(() => { if (!listMode) measure(); }).observe(holder);
+    if (document.fonts) document.fonts.ready.then(() => { if (!listMode) measure(); });
+
+    new IntersectionObserver(entries => {
+        onScreen = entries[entries.length - 1].isIntersecting;
+        if (onScreen) startLoop(); else stopLoop();
+    }).observe(stage);
+
+    // ── 3D cloud: create lazily, or fall back to the list ─────────────────
+
+    function fallback() {
+        section.classList.add('no-3d');
+        updateMode();
+    }
+
+    if (!window.EconomyGL || !webglAvailable()) { fallback(); return; }
+    updateMode();
+
+    const lazy = new IntersectionObserver((entries) => {
         if (!entries.some(entry => entry.isIntersecting)) return;
-        observer.disconnect();
+        lazy.disconnect();
         try {
-            EconomyGL.create(stage, {
+            cloud = EconomyGL.create(holder, {
+                angles: ARMS.map(a => a.angle),
                 ariaLabel: 'The economy as a 3D point cloud. Drag or use the arrow keys to rotate.'
             });
+            section.classList.add('is-3d');
+            measure();
+            startLoop();
         } catch (err) {
             console.warn('[economy] 3D unavailable:', err.message);
-            section.classList.add('no-3d');
+            cloud = null;
+            fallback();
         }
     }, { rootMargin: '100% 0px' }); // "within one viewport" of the screen
 
-    observer.observe(stage);
+    lazy.observe(stage);
 });
 
 // Create a throwaway context to check WebGL support, then release it.

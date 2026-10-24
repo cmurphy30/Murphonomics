@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Murphonomics</title>
-    <link rel="stylesheet" href="css/styles.css?v=13">
+    <link rel="stylesheet" href="css/styles.css?v=14">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body class="hero-page">
@@ -117,7 +117,213 @@
             <h2>The Economy</h2>
             <p class="economy-caption" id="economyCaption"></p>
         </div>
-        <div class="economy-stage" id="economyStage"></div>
+        <div class="economy-stage" id="economyStage">
+            <p class="economy-note">Interactive 3D view needs WebGL. <a href="dashboard.html">Open the full dashboard</a></p>
+            <div class="economy-canvas" id="economyCanvas"></div>
+            <svg class="arm-connectors" id="armConnectors" aria-hidden="true"></svg>
+            <div class="arm-layer" id="armLayer">
+                <div class="arm" data-arm="inflation">
+                    <button type="button" class="arm-header" aria-expanded="false" aria-controls="arm-inflation-panel">Inflation Comparison</button>
+                    <div class="arm-dropdown" id="arm-inflation-panel" role="region" aria-label="Inflation Comparison">
+                    <div class="snapshot-panel snap-inflation">
+                        <p class="panel-title">Inflation Comparison</p>
+                        <p class="panel-latest-value" id="latestInflation">--</p>
+                        <p class="panel-updated" id="updatedInflation">Last updated: --</p>
+                        <div class="range-toggle" id="inflation-range-toggle">
+                            <button class="range-btn" data-years="1">1Y</button>
+                            <button class="range-btn active" data-years="5">5Y</button>
+                        </div>
+                        <div class="panel-chart-wrap">
+                            <canvas id="chartInflation"></canvas>
+                        </div>
+                    </div>
+                    <div class="snap-blurb snap-blurb-cpi">
+                        <p class="blurb-label">CPI Trend</p>
+                        <p class="blurb-text blurb-loading" id="blurbCPI">Loading insight&hellip;</p>
+                    </div>
+                    </div>
+                </div>
+                <div class="arm" data-arm="wages">
+                    <button type="button" class="arm-header" aria-expanded="false" aria-controls="arm-wages-panel">Real vs. Nominal Wage Growth</button>
+                    <div class="arm-dropdown" id="arm-wages-panel" role="region" aria-label="Real vs. Nominal Wage Growth">
+                    <div class="snapshot-panel snap-wages">
+                        <p class="panel-title">Real vs. Nominal Wage Growth</p>
+                        <p class="panel-latest-value" id="latestWages">--</p>
+                        <p class="panel-updated" id="updatedWages">Last updated: --</p>
+                        <div class="range-toggle" id="wages-range-toggle">
+                            <button class="range-btn" data-years="1">1Y</button>
+                            <button class="range-btn active" data-years="5">5Y</button>
+                        </div>
+                        <div class="panel-chart-wrap">
+                            <canvas id="chartWages"></canvas>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                <div class="arm" data-arm="participation">
+                    <button type="button" class="arm-header" aria-expanded="false" aria-controls="arm-participation-panel">Labor Force Participation Rate</button>
+                    <div class="arm-dropdown" id="arm-participation-panel" role="region" aria-label="Labor Force Participation Rate">
+                    <div class="snapshot-panel snap-lfpr">
+                        <p class="panel-title">Labor Force Participation Rate</p>
+                        <p class="panel-latest-value" id="latestLFPR">--</p>
+                        <p class="panel-updated" id="updatedLFPR">Last updated: --</p>
+                        <div class="range-toggle" id="lfpr-range-toggle">
+                            <button class="range-btn" data-years="1">1Y</button>
+                            <button class="range-btn active" data-years="5">5Y</button>
+                        </div>
+                        <div class="panel-chart-wrap">
+                            <canvas id="chartLFPR"></canvas>
+                        </div>
+                    </div>
+                    <div class="snap-blurb snap-blurb-lfpr">
+                        <p class="blurb-label">Labor Force</p>
+                        <p class="blurb-text blurb-loading" id="blurbLFPR">Loading insight&hellip;</p>
+                    </div>
+                    </div>
+                </div>
+                <div class="arm" data-arm="gdp">
+                    <button type="button" class="arm-header" aria-expanded="false" aria-controls="arm-gdp-panel">Real GDP Growth</button>
+                    <div class="arm-dropdown" id="arm-gdp-panel" role="region" aria-label="Real GDP Growth">
+                    <div class="snapshot-panel snap-gdp">
+                        <p class="panel-title">Real GDP Growth</p>
+                        <p class="panel-latest-value" id="latestGDP">--</p>
+                        <p class="panel-updated" id="updatedGDP">Last updated: --</p>
+                        <div class="range-toggle" id="gdp-range-toggle">
+                            <button class="range-btn" data-years="1">1Y</button>
+                            <button class="range-btn" data-years="5">5Y</button>
+                            <button class="range-btn active" data-years="10">10Y</button>
+                        </div>
+                        <div class="panel-chart-wrap">
+                            <canvas id="chartGDP"></canvas>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                <div class="arm" data-arm="debt_service">
+                    <button type="button" class="arm-header" aria-expanded="false" aria-controls="arm-debt_service-panel">Household Debt Service Ratio</button>
+                    <div class="arm-dropdown" id="arm-debt_service-panel" role="region" aria-label="Household Debt Service Ratio">
+                    <div class="snapshot-panel snap-debtservice">
+                        <p class="panel-title">Household Debt Service Ratio</p>
+                        <p class="panel-latest-value" id="latestDebtService">--</p>
+                        <p class="panel-updated" id="updatedDebtService">Last updated: --</p>
+                        <div class="range-toggle" id="debtservice-range-toggle">
+                            <button class="range-btn" data-years="1">1Y</button>
+                            <button class="range-btn active" data-years="5">5Y</button>
+                        </div>
+                        <div class="panel-chart-wrap">
+                            <canvas id="chartDebtService"></canvas>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                <div class="arm" data-arm="credit_spreads">
+                    <button type="button" class="arm-header" aria-expanded="false" aria-controls="arm-credit_spreads-panel">Credit Spreads (OAS)</button>
+                    <div class="arm-dropdown" id="arm-credit_spreads-panel" role="region" aria-label="Credit Spreads (OAS)">
+                    <div class="snapshot-panel snap-creditspreads">
+                        <p class="panel-title">Credit Spreads (OAS)</p>
+                        <p class="panel-latest-value" id="latestCreditSpreads">--</p>
+                        <p class="panel-updated" id="updatedCreditSpreads">Last updated: --</p>
+                        <div class="range-toggle" id="creditspreads-range-toggle">
+                            <button class="range-btn" data-years="1">1Y</button>
+                            <button class="range-btn active" data-years="5">5Y</button>
+                        </div>
+                        <div class="panel-chart-wrap">
+                            <canvas id="chartCreditSpreads"></canvas>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                <div class="arm" data-arm="cape">
+                    <button type="button" class="arm-header" aria-expanded="false" aria-controls="arm-cape-panel">Shiller CAPE Ratio</button>
+                    <div class="arm-dropdown" id="arm-cape-panel" role="region" aria-label="Shiller CAPE Ratio">
+                    <div class="snapshot-panel snap-cape">
+                        <p class="panel-title">Shiller CAPE Ratio</p>
+                        <p class="panel-latest-value" id="latestCAPE">--</p>
+                        <p class="panel-updated" id="updatedCAPE">Last updated: --</p>
+                        <div class="range-toggle" id="cape-range-toggle">
+                            <button class="range-btn" data-years="1">1Y</button>
+                            <button class="range-btn active" data-years="5">5Y</button>
+                        </div>
+                        <div class="panel-chart-wrap">
+                            <canvas id="chartCAPE"></canvas>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                <div class="arm" data-arm="dxy">
+                    <button type="button" class="arm-header" aria-expanded="false" aria-controls="arm-dxy-panel">U.S. Dollar Index (DXY)</button>
+                    <div class="arm-dropdown" id="arm-dxy-panel" role="region" aria-label="U.S. Dollar Index (DXY)">
+                    <div class="snapshot-panel snap-dxy">
+                        <p class="panel-title">U.S. Dollar Index (DXY)</p>
+                        <p class="panel-latest-value" id="latestDollarIndex">--</p>
+                        <p class="panel-updated" id="updatedDollarIndex">Last updated: --</p>
+                        <div class="range-toggle" id="dxy-range-toggle">
+                            <button class="range-btn" data-years="1">1Y</button>
+                            <button class="range-btn active" data-years="5">5Y</button>
+                        </div>
+                        <div class="panel-chart-wrap">
+                            <canvas id="chartDollarIndex"></canvas>
+                        </div>
+                    </div>
+                    <div class="snap-blurb snap-blurb-dxy">
+                        <p class="blurb-label">U.S. Dollar</p>
+                        <p class="blurb-text blurb-loading" id="blurbDXY">Loading insight&hellip;</p>
+                    </div>
+                    </div>
+                </div>
+                <div class="arm" data-arm="real_yield">
+                    <button type="button" class="arm-header" aria-expanded="false" aria-controls="arm-real_yield-panel">Real Yield &amp; Breakeven Inflation</button>
+                    <div class="arm-dropdown" id="arm-real_yield-panel" role="region" aria-label="Real Yield &amp; Breakeven Inflation">
+                    <div class="snapshot-panel snap-realyield">
+                        <p class="panel-title">Real Yield &amp; Breakeven Inflation</p>
+                        <p class="panel-latest-value" id="latestRealYield">--</p>
+                        <p class="panel-updated" id="updatedRealYield">Last updated: --</p>
+                        <div class="range-toggle" id="realyield-range-toggle">
+                            <button class="range-btn" data-years="1">1Y</button>
+                            <button class="range-btn active" data-years="5">5Y</button>
+                        </div>
+                        <div class="panel-chart-wrap">
+                            <canvas id="chartRealYield"></canvas>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                <div class="arm" data-arm="yield_curve">
+                    <button type="button" class="arm-header" aria-expanded="false" aria-controls="arm-yield_curve-panel">10Y–2Y Yield Curve Spread</button>
+                    <div class="arm-dropdown" id="arm-yield_curve-panel" role="region" aria-label="10Y–2Y Yield Curve Spread">
+                    <div class="snapshot-panel snap-yield">
+                        <p class="panel-title">10Y–2Y Yield Curve Spread</p>
+                        <p class="panel-latest-value" id="latestYieldCurve">--</p>
+                        <p class="panel-updated" id="updatedYieldCurve">Last updated: --</p>
+                        <div class="range-toggle" id="yield-range-toggle">
+                            <button class="range-btn" data-years="1">1Y</button>
+                            <button class="range-btn active" data-years="5">5Y</button>
+                        </div>
+                        <div class="panel-chart-wrap">
+                            <canvas id="chartYieldCurve"></canvas>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                <div class="arm" data-arm="fed_funds">
+                    <button type="button" class="arm-header" aria-expanded="false" aria-controls="arm-fed_funds-panel">Fed Funds Rate</button>
+                    <div class="arm-dropdown" id="arm-fed_funds-panel" role="region" aria-label="Fed Funds Rate">
+                    <div class="snapshot-panel snap-fed">
+                        <p class="panel-title">Fed Funds Rate</p>
+                        <p class="panel-latest-value" id="latestFed">--</p>
+                        <p class="panel-updated" id="updatedFed">Last updated: --</p>
+                        <div class="range-toggle" id="fed-range-toggle">
+                            <button class="range-btn" data-years="1">1Y</button>
+                            <button class="range-btn active" data-years="5">5Y</button>
+                        </div>
+                        <div class="panel-chart-wrap">
+                            <canvas id="chartFed"></canvas>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- TOP ROW: AI Summary (left) + Substack Posts (right) -->
@@ -177,8 +383,8 @@
     <script src="js/script.js?v=3"></script>
     <script src="js/snapshot.js?v=4"></script>
     <script src="js/home-about.js?v=1"></script>
-    <script src="js/economy-gl.js?v=1"></script>
-    <script src="js/economy.js?v=1"></script>
+    <script src="js/economy-gl.js?v=2"></script>
+    <script src="js/economy.js?v=2"></script>
 
     <!-- MOBILE BOTTOM NAVIGATION (hidden on desktop via CSS) -->
     <nav class="mobile-bottom-nav">

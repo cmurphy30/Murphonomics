@@ -4,7 +4,8 @@
  * Dependency-free. Knows nothing about labels, charts, or the page — it only
  * draws into a canvas it creates inside the element it is given.
  *
- *   const cloud = EconomyGL.create(parentEl, { count, ariaLabel });
+ *   const cloud = EconomyGL.create(parentEl, { count, ariaLabel, angles });
+ *   (angles: 11 arm anchor angles in radians around the rim; default evenly spaced)
  *   cloud.setWeights([...11 numbers])   // per-arm push (0 = none)
  *   cloud.setEmphasis(index, value)     // per-arm glow (0 = none)
  *   cloud.project(index)                // -> { x, y, depth, visible } in CSS px
@@ -220,7 +221,7 @@ void main() {
         const emphasis = new Float32Array(ARMS);
         const anchors  = new Float32Array(ARMS * 3);
         for (let i = 0; i < ARMS; i++) {
-            const a = (i / ARMS) * TAU;
+            const a = options.angles ? options.angles[i] : (i / ARMS) * TAU;
             anchors[i * 3] = Math.cos(a); anchors[i * 3 + 2] = Math.sin(a);
         }
 
@@ -430,7 +431,8 @@ void main() {
             },
             setPaused(value) {
                 paused = !!value;
-                if (paused) stop(); else requestDraw();
+                if (paused) { stop(); render(); } // final frame shows the latest emphasis
+                else requestDraw();
             },
             resize,
             destroy() {
