@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!section || !stage || !holder) return;
 
     const smallScreen = window.matchMedia('(max-width: 768px)');
-    let cloud = null, openIndex = -1, listMode = false;
+    let cloud = null, openIndex = -1, listMode = false, modeSet = false;
     let raf = 0, onScreen = false, suppressFocusOpen = false;
     let stageW = 1, stageH = 1;
 
@@ -193,7 +193,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ...cfg, i, el, line, mark,
             header:   el.querySelector('.arm-header'),
             dropdown: el.querySelector('.arm-dropdown'),
-            w: 0, h: 0, hover: false, opened: false, openT: 0, closeT: 0, held: null
+            w: 0, h: 0, hover: false, opened: false, openT: 0, closeT: 0, held: null,
+            lastT: '', lastO: '', lastZ: '', lastLine: '', lastMark: ''
         };
     });
 
@@ -224,24 +225,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 a.held = [hx, hy];
             }
 
-            const alpha = p.visible ? 1 : 0.35; // back-facing arms dim but stay hoverable
-            a.el.style.transform = `translate3d(${(hx - a.w / 2).toFixed(1)}px, ${(hy - a.h / 2).toFixed(1)}px, 0)`;
-            a.el.style.opacity   = a.i === openIndex ? 1 : alpha;
-            a.el.style.zIndex    = a.i === openIndex ? 1000000 : Math.round((1 - p.depth) * 100000); // open arm always on top
+            // Back-facing arms dim but stay hoverable; hovered/open arms are always full strength
+            const active = a.hover || a.i === openIndex;
+            const alpha  = p.visible || active ? 1 : 0.35;
 
-            a.line.setAttribute('x1', p.x.toFixed(1)); a.line.setAttribute('y1', p.y.toFixed(1));
-            a.line.setAttribute('x2', hx.toFixed(1));  a.line.setAttribute('y2', hy.toFixed(1));
-            a.line.setAttribute('opacity', alpha);
-            const x = p.x, y = p.y;
-            a.mark.setAttribute('points', `${x},${y - 4} ${x + 4},${y} ${x},${y + 4} ${x - 4},${y}`);
-            a.mark.setAttribute('opacity', alpha);
+            // Writes only (no layout reads), and only when a value changed
+            const t = `translate3d(${(hx - a.w / 2).toFixed(1)}px, ${(hy - a.h / 2).toFixed(1)}px, 0)`;
+            const o = String(alpha);
+            const z = String(a.i === openIndex ? 1000000 : Math.round((1 - p.depth) * 100000)); // open arm on top
+            if (t !== a.lastT) { a.el.style.transform = a.lastT = t; }
+            if (o !== a.lastO) { a.el.style.opacity = a.lastO = o; a.line.setAttribute('opacity', o); a.mark.setAttribute('opacity', o); }
+            if (z !== a.lastZ) { a.el.style.zIndex = a.lastZ = z; }
+
+            const x = p.x.toFixed(1), y = p.y.toFixed(1);
+            const lineKey = `${x},${y},${hx.toFixed(1)},${hy.toFixed(1)}`;
+            if (lineKey !== a.lastLine) {
+                a.lastLine = lineKey;
+                a.line.setAttribute('x1', x); a.line.setAttribute('y1', y);
+                a.line.setAttribute('x2', hx.toFixed(1)); a.line.setAttribute('y2', hy.toFixed(1));
+                const px = p.x, py = p.y;
+                a.mark.setAttribute('points', `${px},${py - 4} ${px + 4},${py} ${px},${py + 4} ${px - 4},${py}`);
+            }
         }
     }
 
     function loop() {
         raf = 0;
         if (!running()) return;
-        positionArms();
+        try {
+            positionArms();
+        } catch (err) {
+            failTo2D(err);
+            return;
+        }
         raf = requestAnimationFrame(loop);
     }
 
@@ -384,8 +400,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateMode() {
         const list = smallScreen.matches || section.classList.contains('no-3d');
-        if (list === listMode && section.classList.contains('mode-set')) return;
-        section.classList.add('mode-set');
+        if (list === listMode && modeSet) return;
+        modeSet = true;
         listMode = list;
         if (openIndex >= 0) close(openIndex);
         section.classList.toggle('list-mode', list);
@@ -393,6 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stopLoop();
             arms.forEach(a => {
                 a.el.style.transform = a.el.style.opacity = a.el.style.zIndex = '';
+                a.lastT = a.lastO = a.lastZ = a.lastLine = '';
                 a.dropdown.style.left = a.dropdown.style.top = a.dropdown.style.maxHeight = '';
             });
         } else {
@@ -419,6 +436,20 @@ document.addEventListener('DOMContentLoaded', () => {
         updateMode();
     }
 
+    // Any error from the 3D layer after creation: tear it down and show the list
+    let failedOver = false;
+    function failTo2D(err) {
+        if (failedOver) return;
+        failedOver = true;
+        console.warn('[economy] 3D view stopped, showing the list instead:', err && err.message);
+        stopLoop();
+        const c = cloud;
+        cloud = shape.cloud = null;
+        if (c) { try { c.destroy(); } catch (_) {} }
+        section.classList.remove('is-3d');
+        fallback();
+    }
+
     if (!window.EconomyGL || !webglAvailable()) { fallback(); return; }
     updateMode();
 
@@ -430,6 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 angles:  ARMS.map(a => a.angle),
                 weights: toArray(shape.weights),
                 yaw:     initialYaw(),
+                onError: failTo2D,
                 ariaLabel: 'The economy as a 3D point cloud. Drag or use the arrow keys to rotate.'
             });
             if (!REDUCED_MOTION) cloud.setMotion(toArray(shape.motion));

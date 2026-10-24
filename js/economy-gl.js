@@ -6,7 +6,8 @@
  *
  *   const cloud = EconomyGL.create(parentEl, { count, ariaLabel, angles, weights, yaw });
  *   (angles: 11 arm directions in radians around the rim; weights: 11 numbers 0..1;
- *    yaw: starting rotation in radians)
+ *    yaw: starting rotation in radians; onError(err): called once if rendering fails,
+ *    after the cloud has stopped itself)
  *   cloud.setWeights([...11])        // lobe size per arm; morphs smoothly (~1.2s)
  *   cloud.setEmphasis(index, 0..1)   // adds up to SHAPE.EMPHASIS to that arm's weight (~0.3s)
  *   cloud.setMotion([...11])         // extra breathing near each arm, 0..1
@@ -336,7 +337,11 @@ void main() {
             ];
         }
 
+        // Recompute only when the camera changed (project() is called 11× per frame)
+        let mYaw = NaN, mPitch = NaN, mDist = NaN, mProj = null;
         function updateMatrices() {
+            if (yaw === mYaw && pitchOff === mPitch && dist === mDist && proj === mProj) return;
+            mYaw = yaw; mPitch = pitchOff; mDist = dist; mProj = proj;
             mv  = modelView(yaw, PITCH0 + pitchOff, dist);
             mvp = multiply(proj, mv);
         }
@@ -399,10 +404,24 @@ void main() {
             raf = 0;
             const dt = last ? Math.min((now - last) / 1000, 0.1) : 0;
             last = now;
-            step(dt, now);
-            render();
+            try {
+                step(dt, now);
+                render();
+            } catch (err) {
+                fail(err);
+                return;
+            }
             if (animating()) raf = requestAnimationFrame(frame);
             else last = 0;
+        }
+
+        // A rendering error stops the cloud for good and tells the caller once
+        let failed = false;
+        function fail(err) {
+            if (failed) return;
+            failed = true; destroyed = true;
+            stop();
+            if (typeof options.onError === 'function') options.onError(err);
         }
 
         function requestDraw() {
@@ -454,7 +473,11 @@ void main() {
         function onVisibility() { if (document.hidden) stop(); else requestDraw(); }
 
         function onLost(e) { e.preventDefault(); lost = true; stop(); }
-        function onRestored() { lost = false; initGL(); requestDraw(); }
+        function onRestored() {
+            lost = false;
+            try { initGL(); } catch (err) { fail(err); return; }
+            requestDraw();
+        }
 
         function resize() {
             cssW = Math.max(1, parent.clientWidth);

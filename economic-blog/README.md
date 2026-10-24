@@ -243,3 +243,18 @@ The homepage 3D cloud grows a lobe for each of its 11 arms. How big each lobe is
 ```
 
 **Regenerate for the current month.** In the Netlify dashboard open Blobs → `economy-weights`, delete the `weights-YYYY-MM` key for this month, then load the homepage. Visitors' browsers keep their copy until the month ends, so they won't see the new weights until next month unless they clear site data.
+
+## Homepage 3D economy: modes and debugging
+
+**Views.** The Economy section on `index.html` shows the same 11 arms (`.arm`, one per chart) in one of two layouts:
+
+- **3D (default on desktop):** a WebGL point cloud (`js/economy-gl.js`) with floating labels. Hover, focus or tap a label to unfurl its chart panel.
+- **List:** a vertical accordion of the same arms. It is used on screens 768px wide or less (with a small decorative cloud above it) and whenever 3D is unavailable.
+
+**`no-3d` mode.** `#economy` gets the class `no-3d` when WebGL can't be created, when `EconomyGL` fails to load, or when the 3D layer throws an error at any point (the cloud is torn down and the page switches to the list without reloading). In `no-3d` mode the canvas is hidden and the note "Interactive 3D view needs WebGL. Open the full dashboard" links to `dashboard.html`. Charts, the summary and the rest of the page are unaffected. To try it, disable WebGL in the browser (for Chrome, start it with `--disable-webgl`).
+
+**Reduced motion.** With `prefers-reduced-motion`, the cloud doesn't autorotate or breathe, the live-data motion layer is off, weight changes ease in over about 150ms, and the About section and panels appear without animation.
+
+**`?debug=weights`.** Open `index.html?debug=weights` to show a small fixed panel with one slider per arm (0–1) and a "log JSON" button that prints the current weights to the browser console. Sliders call `Economy.setWeights()`, so the cloud morphs live. Nothing is shown without the parameter, and nothing is saved.
+
+**Console API.** `Economy.setWeights({ fed_funds: 0.9 })` and `Economy.setMotion({ gdp: 0.4 })` accept any subset of the 11 arm keys; values are clamped to 0–1 and unknown keys are ignored.

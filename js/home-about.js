@@ -3,7 +3,8 @@
  *
  * 1. Fetches about.html, pulls out its .about-card and injects it into
  *    #homeAbout, so about.html stays the single source of truth for the text.
- * 2. Reveals the About section the first time it is ~15% in view.
+ * 2. Reveals the About section once, as the hero finishes collapsing (when its
+ *    top reaches the top fifth of the viewport).
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -46,12 +47,15 @@ function initAboutReveal() {
         return;
     }
 
+    // The hero clips away from the bottom over the spacer's scroll range, so the
+    // section is uncovered gradually; waiting until its top is in the top 20% of
+    // the viewport times the reveal to the end of the collapse.
     const observer = new IntersectionObserver((entries) => {
         if (entries.some(entry => entry.isIntersecting)) {
             section.classList.add('is-visible');
             observer.disconnect(); // reveal only once
         }
-    }, { threshold: 0.15 });
+    }, { rootMargin: '0px 0px -80% 0px' });
 
     observer.observe(section);
 }

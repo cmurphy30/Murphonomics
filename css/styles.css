@@ -1684,7 +1684,7 @@ body.hero-page .site-footer {
     flex-direction: column;
     gap: 10px;
     overflow-y: auto; /* only scrolls when capped to the available viewport room */
-    pointer-events: auto;
+    pointer-events: none; /* a closing panel must not catch the cursor while it fades */
     visibility: hidden;
     opacity: 0;
     clip-path: inset(0 0 100% 0);
@@ -1698,6 +1698,7 @@ body.hero-page .site-footer {
 .arm.is-open .arm-dropdown {
     visibility: visible;
     opacity: 1;
+    pointer-events: auto;
     clip-path: inset(0);
     transition: clip-path 0.3s ease-out, opacity 0.3s ease-out, visibility 0s;
 }
