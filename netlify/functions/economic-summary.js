@@ -13,7 +13,8 @@
  *
  * After generating a summary, it saves the result to Netlify Blobs under the key
  * "summary-YYYY-MM" (e.g. "summary-2025-04"). This builds the archive that
- * get-summaries.js serves to the Market Updates page.
+ * get-summaries.js serves to the Market Updates page. If a summary for the
+ * current month is already saved, it is returned as-is and Claude is not called.
  *
  * Request:  POST with JSON body { snapshot: { fedFundsRate, headlineCPIYoY, ... } }
  * Response: { summary: "...", generatedAt: "...", month: "April 2025" }
@@ -128,6 +129,37 @@ exports.handler = async function (event, context) {
         };
     }
 
+    // ── Return this month's saved summary if one already exists ──────────────
+    // Only the first request of each month calls Claude. Every visitor after that
+    // gets the same saved summary, so everyone reads identical text all month.
+    const monthKey = `summary-${new Date().toISOString().slice(0, 7)}`;
+    let store = null;
+    try {
+        const { getStore } = require('@netlify/blobs');
+        store = getStore({ name: 'summaries', siteID: process.env.NETLIFY_SITE_ID, token: process.env.NETLIFY_TOKEN });
+        const existing = await store.get(monthKey, { type: 'json' });
+        if (existing && existing.summary) {
+            console.log('[economic-summary] returning saved summary for', monthKey);
+            return {
+                statusCode: 200,
+                headers: {
+                    'Content-Type':                'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify(existing)
+            };
+        }
+    } catch (blobErr) {
+        // If Blobs can't be read, refuse to generate — otherwise every visitor
+        // would trigger a fresh (different) summary.
+        console.error('[economic-summary] failed to read Blobs:', blobErr.message);
+        return {
+            statusCode: 503,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: 'Summary storage is unavailable.' })
+        };
+    }
+
     try {
         const dataText = formatSnapshotForPrompt(snapshot);
         console.log('[economic-summary] prompt built, calling Claude API...');
@@ -210,9 +242,6 @@ Return only valid JSON. No markdown code fences. No bullet points anywhere.`
         // ── Save to Netlify Blobs ────────────────────────────────────────────────
         // Key format: "summary-YYYY-MM" (e.g. "summary-2025-04").
         try {
-            const { getStore } = require('@netlify/blobs');
-            const store    = getStore({ name: 'summaries', siteID: process.env.NETLIFY_SITE_ID, token: process.env.NETLIFY_TOKEN });
-            const monthKey = `summary-${now.toISOString().slice(0, 7)}`;
             await store.setJSON(monthKey, { summary: summaryText, generatedAt, month, cpiBlurb, lfprBlurb, dxyBlurb });
             console.log('[economic-summary] saved to Blobs under key:', monthKey);
         } catch (blobErr) {

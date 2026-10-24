@@ -147,9 +147,12 @@ function buildSnapshot(fred, bls, bea) {
 // POST a pre-built snapshot to the economic-summary function.
 // The function only calls Claude — no re-fetching of APIs on the server side.
 async function fetchSummary(fred, bls, bea) {
-    // Use the 30-day TTL (SUMMARY_CACHE_TTL_MS) — summaries are generated monthly
+    // Summaries are generated once per month and shared by all visitors.
+    // Only reuse the browser's copy if it belongs to the current month, so a
+    // returning visitor never keeps seeing last month's summary.
     const cached = getFromCache('summary_v2', SUMMARY_CACHE_TTL_MS);
-    if (cached) return cached;
+    const thisMonth = new Date().toISOString().slice(0, 7);
+    if (cached && cached.generatedAt && cached.generatedAt.slice(0, 7) === thisMonth) return cached;
 
     const snapshot = buildSnapshot(fred, bls, bea);
 
