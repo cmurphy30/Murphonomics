@@ -1927,3 +1927,56 @@ body.hero-page .economy-section {
     }
 }
 
+
+/* ─── Weights debug panel (index.html?debug=weights only) ────────────────── */
+
+.weights-debug {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 2000;
+    width: 280px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+    background: var(--hud-fill);
+    border: 1px solid var(--color-primary-lighter);
+    color: var(--color-background);
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+}
+
+.weights-debug-title {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: var(--spacing-xs);
+}
+
+.weights-debug-row {
+    display: grid;
+    grid-template-columns: 1fr 80px 32px;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.weights-debug-row output {
+    text-align: right;
+}
+
+.weights-debug button {
+    margin-top: var(--spacing-xs);
+    padding: 4px 10px;
+    font: inherit;
+    color: var(--color-background);
+    background: var(--color-primary);
+    border: 1px solid var(--color-primary-lighter);
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .weights-debug {
+        bottom: calc(80px + env(safe-area-inset-bottom));
+    }
+}

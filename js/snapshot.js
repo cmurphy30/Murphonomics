@@ -998,6 +998,7 @@
             // getData() is defined in data-service.js — fetches from all Netlify functions,
             // checking the 24-hour localStorage cache before making any network calls
             const data = await getData();
+            window.dispatchEvent(new CustomEvent('murphonomics:data', { detail: data }));
 
             // Reveal the grid now that data has arrived (hides the loading spinner)
             if (loadingEl) loadingEl.style.display = 'none';

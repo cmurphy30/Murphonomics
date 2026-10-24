@@ -9,6 +9,11 @@
  * The 11 .arm elements (static HTML, chart panels rendered by snapshot.js) are
  * either floated around the cloud — positioned every frame from
  * cloud.project(i) — or, in list mode (≤768px or no-3d), shown as an accordion.
+ *
+ * Shape: each arm has a weight (lobe size) and a motion value (extra breathing
+ * from how unusual its latest data move was). Both are keyed by arm key:
+ *   Economy.setWeights({ fed_funds: 0.9 })   Economy.setMotion({ gdp: 0.4 })
+ * Debug sliders: add ?debug=weights to the URL.
  */
 
 const TAU = Math.PI * 2;
@@ -28,6 +33,102 @@ const ARMS = [
     { key: 'yield_curve',    title: '10Y–2Y Yield Curve Spread' },
     { key: 'fed_funds',      title: 'Fed Funds Rate' }
 ].map((arm, i, all) => ({ ...arm, angle: (i / all.length) * TAU }));
+
+// Lobe sizes used until real weights arrive (0..1)
+const DEFAULT_WEIGHTS = {
+    fed_funds: 0.9, inflation: 0.8, yield_curve: 0.6, real_yield: 0.5, gdp: 0.4, dxy: 0.4,
+    credit_spreads: 0.35, wages: 0.35, participation: 0.3, cape: 0.3, debt_service: 0.25
+};
+
+// Series each panel charts (first series where a panel shows two); daily
+// series are collapsed to month-end like the panels do
+const MOTION_SERIES = {
+    inflation:      d => d.bls && d.bls.headlineCPIYoY,
+    wages:          d => d.bls && d.bls.realWageGrowth,
+    participation:  d => d.bls && d.bls.lfpr,
+    gdp:            d => d.bea && d.bea.realGDP,
+    debt_service:   d => d.fred && d.fred.debtServiceRatio,
+    credit_spreads: d => monthlyLast(d.fred && d.fred.hySpread),
+    cape:           d => d.fred && d.fred.cape,
+    dxy:            d => monthlyLast(d.fred && d.fred.dollarIndex),
+    real_yield:     d => monthlyLast(d.fred && d.fred.realYield10y),
+    yield_curve:    d => monthlyLast(d.fred && d.fred.yieldCurveSpread),
+    fed_funds:      d => d.fred && d.fred.fedfunds
+};
+
+const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Shared shape state (keyed by arm key); pushed to the cloud once it exists
+const shape = {
+    weights: { ...DEFAULT_WEIGHTS },
+    motion:  Object.fromEntries(ARMS.map(a => [a.key, 0])),
+    cloud:   null
+};
+
+function toArray(obj) { return ARMS.map(a => obj[a.key] || 0); }
+
+// Start rotated so the two heaviest lobes sit front-right, where their
+// silhouette reads best (a lobe at angle θ faces screen-right when yaw = θ)
+function initialYaw() {
+    const top = ARMS.slice().sort((a, b) => shape.weights[b.key] - shape.weights[a.key]).slice(0, 2);
+    const mid = Math.atan2(top.reduce((s, a) => s + Math.sin(a.angle), 0), top.reduce((s, a) => s + Math.cos(a.angle), 0));
+    return mid - Math.PI / 6;
+}
+
+// Copy valid keys from obj into target, clamped to 0..1; unknown keys are ignored
+function mergeValues(target, obj) {
+    if (!obj || typeof obj !== 'object') return;
+    Object.keys(obj).forEach(key => {
+        if (!Object.prototype.hasOwnProperty.call(target, key)) return;
+        const n = Number(obj[key]);
+        if (Number.isFinite(n)) target[key] = Math.min(Math.max(n, 0), 1);
+    });
+}
+
+window.Economy = {
+    setWeights(obj) {
+        mergeValues(shape.weights, obj);
+        if (shape.cloud) shape.cloud.setWeights(toArray(shape.weights));
+    },
+    setMotion(obj) {
+        if (REDUCED_MOTION) return; // no motion layer under reduced motion
+        mergeValues(shape.motion, obj);
+        if (shape.cloud) shape.cloud.setMotion(toArray(shape.motion));
+    }
+};
+
+// ── Live-data motion: |z-score| of the latest change vs the trailing 24 ───
+
+function monthlyLast(series) {
+    if (!Array.isArray(series)) return [];
+    const byMonth = new Map();
+    series.forEach(o => { if (o && typeof o.date === 'string') byMonth.set(o.date.slice(0, 7), o); });
+    return Array.from(byMonth.values());
+}
+
+function motionScore(series) {
+    if (!Array.isArray(series)) return 0;
+    const v = series.map(o => (o ? Number(o.value) : NaN)).filter(Number.isFinite);
+    const changes = [];
+    for (let i = 1; i < v.length; i++) changes.push(v[i] - v[i - 1]);
+    if (changes.length < 9) return 0; // too short to judge (quarterly series use what exists)
+    const latest = changes[changes.length - 1];
+    const trail = changes.slice(-25, -1);
+    const mean = trail.reduce((s, x) => s + x, 0) / trail.length;
+    const sd = Math.sqrt(trail.reduce((s, x) => s + (x - mean) * (x - mean), 0) / trail.length);
+    if (!(sd > 1e-9)) return 0;
+    return Math.min(Math.abs((latest - mean) / sd) / 3, 1);
+}
+
+window.addEventListener('murphonomics:data', e => {
+    const data = e.detail || {};
+    const motion = {};
+    Object.keys(MOTION_SERIES).forEach(key => {
+        try { motion[key] = motionScore(MOTION_SERIES[key](data)); }
+        catch (_) { motion[key] = 0; }
+    });
+    window.Economy.setMotion(motion);
+});
 
 const OPEN_DELAY  = 120; // hover intent
 const CLOSE_GRACE = 250;
@@ -59,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ...cfg, i, el, line, mark,
             header:   el.querySelector('.arm-header'),
             dropdown: el.querySelector('.arm-dropdown'),
-            w: 0, h: 0, hover: false, opened: false, openT: 0, closeT: 0
+            w: 0, h: 0, hover: false, opened: false, openT: 0, closeT: 0, held: null
         };
     });
 
@@ -75,12 +176,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const cx = stageW / 2, cy = stageH / 2;
         for (const a of arms) {
             const p = cloud.project(a.i);
-            const dx = p.x - cx, dy = p.y - cy, len = Math.hypot(dx, dy) || 1;
-            // Header sits just outside the anchor, nudged upward
-            let hx = p.x + (dx / len) * 34;
-            let hy = p.y + (dy / len) * 22 - 16;
-            hx = Math.min(Math.max(hx, a.w / 2 + 6), stageW - a.w / 2 - 6);
-            hy = Math.min(Math.max(hy, a.h / 2 + 6), stageH - a.h / 2 - 6);
+            let hx, hy;
+            if ((a.hover || a.i === openIndex) && a.held) {
+                // Hold the header still under the cursor while its lobe lifts;
+                // the connector still follows the anchor
+                [hx, hy] = a.held;
+            } else {
+                const dx = p.x - cx, dy = p.y - cy, len = Math.hypot(dx, dy) || 1;
+                // Header sits just outside the anchor, nudged upward
+                hx = p.x + (dx / len) * 34;
+                hy = p.y + (dy / len) * 22 - 16;
+                hx = Math.min(Math.max(hx, a.w / 2 + 6), stageW - a.w / 2 - 6);
+                hy = Math.min(Math.max(hy, a.h / 2 + 6), stageH - a.h / 2 - 6);
+                a.held = [hx, hy];
+            }
 
             const alpha = p.visible ? 1 : 0.35; // back-facing arms dim but stay hoverable
             a.el.style.transform = `translate3d(${(hx - a.w / 2).toFixed(1)}px, ${(hy - a.h / 2).toFixed(1)}px, 0)`;
@@ -284,10 +393,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!entries.some(entry => entry.isIntersecting)) return;
         lazy.disconnect();
         try {
-            cloud = EconomyGL.create(holder, {
-                angles: ARMS.map(a => a.angle),
+            cloud = shape.cloud = EconomyGL.create(holder, {
+                angles:  ARMS.map(a => a.angle),
+                weights: toArray(shape.weights),
+                yaw:     initialYaw(),
                 ariaLabel: 'The economy as a 3D point cloud. Drag or use the arrow keys to rotate.'
             });
+            if (!REDUCED_MOTION) cloud.setMotion(toArray(shape.motion));
             section.classList.add('is-3d');
             measure();
             startLoop();
@@ -299,6 +411,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { rootMargin: '100% 0px' }); // "within one viewport" of the screen
 
     lazy.observe(stage);
+});
+
+// ── Debug panel: ?debug=weights → 11 sliders + "log JSON" ─────────────────
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (new URLSearchParams(location.search).get('debug') !== 'weights') return;
+
+    const panel = document.createElement('div');
+    panel.className = 'weights-debug';
+    panel.innerHTML = '<p class="weights-debug-title">Weights</p>';
+    ARMS.forEach(arm => {
+        const row = document.createElement('label');
+        row.className = 'weights-debug-row';
+        row.innerHTML = `<span>${arm.title}</span><input type="range" min="0" max="1" step="0.01"><output></output>`;
+        const input = row.querySelector('input'), out = row.querySelector('output');
+        input.value = shape.weights[arm.key];
+        out.textContent = (+input.value).toFixed(2);
+        input.addEventListener('input', () => {
+            out.textContent = (+input.value).toFixed(2);
+            window.Economy.setWeights({ [arm.key]: +input.value });
+        });
+        panel.appendChild(row);
+    });
+    const log = document.createElement('button');
+    log.type = 'button';
+    log.textContent = 'log JSON';
+    log.addEventListener('click', () => console.log(JSON.stringify(shape.weights, null, 2)));
+    panel.appendChild(log);
+    document.body.appendChild(panel);
 });
 
 // Create a throwaway context to check WebGL support, then release it.

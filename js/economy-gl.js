@@ -4,16 +4,20 @@
  * Dependency-free. Knows nothing about labels, charts, or the page — it only
  * draws into a canvas it creates inside the element it is given.
  *
- *   const cloud = EconomyGL.create(parentEl, { count, ariaLabel, angles });
- *   (angles: 11 arm anchor angles in radians around the rim; default evenly spaced)
- *   cloud.setWeights([...11 numbers])   // per-arm push (0 = none)
- *   cloud.setEmphasis(index, value)     // per-arm glow (0 = none)
- *   cloud.project(index)                // -> { x, y, depth, visible } in CSS px
- *   cloud.setPaused(bool)
+ *   const cloud = EconomyGL.create(parentEl, { count, ariaLabel, angles, weights, yaw });
+ *   (angles: 11 arm directions in radians around the rim; weights: 11 numbers 0..1;
+ *    yaw: starting rotation in radians)
+ *   cloud.setWeights([...11])        // lobe size per arm; morphs smoothly (~1.2s)
+ *   cloud.setEmphasis(index, 0..1)   // adds up to SHAPE.EMPHASIS to that arm's weight (~0.3s)
+ *   cloud.setMotion([...11])         // extra breathing near each arm, 0..1
+ *   cloud.project(index)             // -> { x, y, depth, visible } at the arm's lobe tip, CSS px
+ *   cloud.setPaused(bool)            // freezes rotation (autorotate off, drag inertia damps out)
  *   cloud.resize()
  *   cloud.destroy()
  *
- * Throws if WebGL is unavailable, so callers can fall back.
+ * The cloud is deformed entirely on the GPU. The same SHAPE constants feed the
+ * shader (as #defines) and the JS anchor math in project(), so connectors end
+ * on the bulge. Throws if WebGL is unavailable, so callers can fall back.
  */
 
 (function () {
@@ -22,17 +26,41 @@
     const ARMS      = 11;
     const STRIDE    = 8;                  // floats per point: pos(3) theta(1) seed(1) color(3)
     const TAU       = Math.PI * 2;
-    const R_VOID    = 0.32;               // empty dark void in the middle
     const FOV       = 40 * Math.PI / 180;
-    const BASE_DIST = 3.2;                // camera distance at wide aspect ratios
+    const BASE_DIST = 3.6;                // camera distance at wide aspect ratios (room for lobes)
     const PITCH0    = 0.5;                // default view looks down into the bowl (~29°)
     const PITCH_MAX = 25 * Math.PI / 180; // drag range around the default view
     const AUTO_SPIN = 0.15;               // rad/s
     const RESUME_MS = 3000;               // autorotate resumes this long after release
 
+    // Smoothing time constants (seconds) for CPU-side uniform damping
+    const TAU_WEIGHT   = 1.2;
+    const TAU_EMPHASIS = 0.1;             // ~0.3s to settle
+    const TAU_REDUCED  = 0.05;            // ~150ms ease under prefers-reduced-motion
+
+    // Shape constants — shared by the shader and project()
+    const SHAPE = {
+        K:          7.0,   // lobe sharpness: pow(max(dot(dir, armDir), 0), K)
+        AMP_OUT:    0.50,  // outward push per unit of summed influence
+        AMP_UP:     0.20,  // upward lift per unit of summed influence
+        NUDGE:      0.30,  // pull toward the arm's direction (makes lobes pointed)
+        R_VOID:     0.32,  // empty dark void in the middle
+        RIM_R:      1.0,   // anchor radius on the undeformed rim
+        RIM_Y:      0.5,   // anchor height on the undeformed rim
+        EMPHASIS:   0.15,  // max weight added by setEmphasis
+        MOTION_CAP: 0.2    // motion breathing capped at 20% of the weight effect
+    };
+
     // ── Shaders (GLSL ES 1.00 — works on every WebGL1 browser) ────────────────
 
     const VERT = `
+#define K ${SHAPE.K.toFixed(4)}
+#define AMP_OUT ${SHAPE.AMP_OUT.toFixed(4)}
+#define AMP_UP ${SHAPE.AMP_UP.toFixed(4)}
+#define NUDGE ${SHAPE.NUDGE.toFixed(4)}
+#define R_VOID ${SHAPE.R_VOID.toFixed(4)}
+#define RIM_R ${SHAPE.RIM_R.toFixed(4)}
+#define MOTION_CAP ${SHAPE.MOTION_CAP.toFixed(4)}
 attribute vec3 aPos;
 attribute float aTheta;
 attribute float aSeed;
@@ -44,32 +72,43 @@ uniform float uSize;
 uniform float uDpr;
 uniform vec3 uHi;
 uniform float uW[11];
-uniform float uE[11];
+uniform float uM[11];
 uniform vec3 uA[11];
 varying vec3 vColor;
 varying float vAlpha;
 void main() {
-    vec3 dir = vec3(cos(aTheta), 0.0, sin(aTheta));
+    float r = length(aPos.xz);
+    vec3 dir = vec3(aPos.x / r, 0.0, aPos.z / r);
     float ph = aSeed * 6.2831853;
-    vec3 p = aPos;
-    // Idle breathing: small radial + vertical sine displacement
-    p += dir * (uBreath * 0.02 * sin(uTime * 0.9 + ph + aTheta * 3.0));
-    p.y += uBreath * 0.015 * sin(uTime * 0.6 + ph * 1.7 + aTheta * 2.0);
-    // Arm slots (all zero for now): weights push points outward, emphasis glows
-    float push = 0.0;
-    float glow = 0.0;
+    // Deformation grows from the void edge (0) to the rim (1)
+    float t = smoothstep(R_VOID, RIM_R, r);
+
+    float S = 0.0;          // summed weight influence
+    float M = 0.0;          // summed motion influence
+    vec3 pull = vec3(0.0);  // nudge toward arm directions
     for (int i = 0; i < 11; i++) {
-        float k = smoothstep(0.9, 1.0, dot(dir, uA[i]));
-        push += uW[i] * k;
-        glow += uE[i] * k;
+        float f = pow(max(dot(dir, uA[i]), 0.0), K);
+        S += uW[i] * f;
+        M += uM[i] * f;
+        pull += uW[i] * f * (uA[i] - dir);
     }
-    p += dir * push * 0.25;
+
+    vec3 p = aPos;
+    p += (dir * (S * AMP_OUT) + pull * NUDGE) * t;
+    p.y += S * AMP_UP * t;
+
+    // Idle breathing + live-data motion near each arm (capped vs the weight effect)
+    float motion = min(M, MOTION_CAP * S) * AMP_OUT * t;
+    p += dir * (uBreath * (0.02 * sin(uTime * 0.9 + ph + aTheta * 3.0) + motion * sin(uTime * 2.2 + ph)));
+    p.y += uBreath * 0.015 * sin(uTime * 0.6 + ph * 1.7 + aTheta * 2.0);
+
     gl_Position = uMVP * vec4(p, 1.0);
     float w = gl_Position.w;
-    float s = uSize * (0.6 + 0.8 * fract(aSeed * 7.13)) * (3.2 / w) * (1.0 + glow * 0.6);
+    float lit = clamp(S * t, 0.0, 1.5);
+    float s = uSize * (0.6 + 0.8 * fract(aSeed * 7.13)) * (3.6 / w) * (1.0 + lit * 0.25);
     gl_PointSize = clamp(s, 1.0, 24.0) * uDpr;
-    vColor = mix(aColor, uHi, clamp(glow, 0.0, 1.0) * 0.5);
-    vAlpha = (0.45 + 0.4 * fract(aSeed * 3.7)) * mix(1.0, 0.5, smoothstep(2.6, 4.2, w)) * (1.0 + glow);
+    vColor = mix(aColor, uHi, clamp(lit * 0.45, 0.0, 0.6));
+    vAlpha = (0.45 + 0.4 * fract(aSeed * 3.7)) * mix(1.0, 0.5, smoothstep(3.0, 4.6, w)) * (1.0 + lit * 0.5);
 }`;
 
     const FRAG = `
@@ -171,7 +210,7 @@ void main() {
             // Average of three uniforms peaks mid-ring; a few stragglers fray the rim
             let rn = (rand() + rand() + rand()) / 3;
             if (rand() < 0.08) rn = 0.9 + rand() * 0.25;
-            const r     = R_VOID + (edge - R_VOID) * rn + (rand() - 0.5) * 0.04;
+            const r     = SHAPE.R_VOID + (edge - SHAPE.R_VOID) * rn + (rand() - 0.5) * 0.04;
             const thick = 0.05 + 0.07 * rn;
             const y     = -0.5 + 1.0 * Math.pow(Math.min(rn, 1.15), 1.6) + (rand() + rand() - 1) * thick;
 
@@ -192,7 +231,7 @@ void main() {
             if (ys[i] >= yTop) col = lerp3(col, white, 0.7);
             data.set(col, i * STRIDE + 5);
         }
-        return { data, white, rimY: 0.5 };
+        return { data, white };
     }
 
     // ── Public factory ────────────────────────────────────────────────────────
@@ -217,8 +256,14 @@ void main() {
         if (!gl) throw new Error('EconomyGL: WebGL unavailable');
 
         const cloud    = buildCloud(count);
-        const weights  = new Float32Array(ARMS);
-        const emphasis = new Float32Array(ARMS);
+        // Targets are set by the public API; current values ease toward them each frame
+        const wTarget = new Float32Array(ARMS), wCur = new Float32Array(ARMS);
+        const eTarget = new Float32Array(ARMS), eCur = new Float32Array(ARMS);
+        const mTarget = new Float32Array(ARMS), mCur = new Float32Array(ARMS);
+        const wEff    = new Float32Array(ARMS); // wCur + emphasis boost, sent as uW
+        if (options.weights) {
+            for (let i = 0; i < ARMS; i++) wTarget[i] = wCur[i] = Math.max(0, +options.weights[i] || 0);
+        }
         const anchors  = new Float32Array(ARMS * 3);
         for (let i = 0; i < ARMS; i++) {
             const a = options.angles ? options.angles[i] : (i / ARMS) * TAU;
@@ -227,7 +272,7 @@ void main() {
 
         let prog = null, buf = null, loc = {}, lost = false;
         let cssW = 1, cssH = 1, dpr = 1, dist = BASE_DIST, proj = perspective(FOV, 1, 0.1, 20), mvp = null, mv = null;
-        let yaw = 0.6, pitchOff = 0, vYaw = 0, vPitch = 0;
+        let yaw = Number.isFinite(options.yaw) ? options.yaw : 0.6, pitchOff = 0, vYaw = 0, vPitch = 0;
         let dragging = false, lastX = 0, lastY = 0, pointerId = null, releasedAt = -Infinity;
         let time = 0, last = 0, raf = 0, paused = false, onScreen = true, destroyed = false;
 
@@ -259,7 +304,7 @@ void main() {
                 gl.enableVertexAttribArray(l);
                 gl.vertexAttribPointer(l, size, gl.FLOAT, false, STRIDE * F, off * F);
             });
-            ['uMVP', 'uTime', 'uBreath', 'uSize', 'uDpr', 'uHi', 'uW', 'uE', 'uA'].forEach(n => {
+            ['uMVP', 'uTime', 'uBreath', 'uSize', 'uDpr', 'uHi', 'uW', 'uM', 'uA'].forEach(n => {
                 loc[n] = gl.getUniformLocation(prog, n);
             });
             gl.uniform3fv(loc.uHi, cloud.white);
@@ -269,6 +314,26 @@ void main() {
             gl.enable(gl.BLEND);
             gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
             gl.clearColor(0, 0, 0, 0);
+        }
+
+        // Lobe tip for arm i — mirrors the vertex shader's deformation (minus breathing)
+        function anchorTip(i) {
+            updateEffective();
+            const dx = anchors[i * 3], dz = anchors[i * 3 + 2];
+            let S = 0, px = 0, pz = 0;
+            for (let j = 0; j < ARMS; j++) {
+                const ax = anchors[j * 3], az = anchors[j * 3 + 2];
+                const f = Math.pow(Math.max(dx * ax + dz * az, 0), SHAPE.K);
+                S  += wEff[j] * f;
+                px += wEff[j] * f * (ax - dx);
+                pz += wEff[j] * f * (az - dz);
+            }
+            const t = 1; // smoothstep(R_VOID, RIM_R, RIM_R)
+            return [
+                dx * SHAPE.RIM_R + (dx * S * SHAPE.AMP_OUT + px * SHAPE.NUDGE) * t,
+                SHAPE.RIM_Y + S * SHAPE.AMP_UP * t,
+                dz * SHAPE.RIM_R + (dz * S * SHAPE.AMP_OUT + pz * SHAPE.NUDGE) * t
+            ];
         }
 
         function updateMatrices() {
@@ -285,24 +350,47 @@ void main() {
             gl.uniform1f(loc.uTime, time);
             gl.uniform1f(loc.uBreath, reduced ? 0 : 1);
             gl.uniform1f(loc.uDpr, dpr);
-            gl.uniform1fv(loc.uW, weights);
-            gl.uniform1fv(loc.uE, emphasis);
+            updateEffective();
+            gl.uniform1fv(loc.uW, wEff);
+            gl.uniform1fv(loc.uM, mCur);
             gl.drawArrays(gl.POINTS, 0, count);
         }
 
-        // ── Loop: runs only while visible, unpaused, and something is moving ──
+        function updateEffective() {
+            for (let i = 0; i < ARMS; i++) wEff[i] = wCur[i] + SHAPE.EMPHASIS * eCur[i];
+        }
 
-        function running() { return !paused && onScreen && !document.hidden && !lost && !destroyed; }
+        // Exponential damping of current toward target; returns true while still settling
+        function ease(cur, target, k) {
+            let settling = false;
+            for (let i = 0; i < ARMS; i++) {
+                const d = target[i] - cur[i];
+                if (Math.abs(d) < 1e-4) { cur[i] = target[i]; continue; }
+                cur[i] += d * k;
+                settling = true;
+            }
+            return settling;
+        }
+
+        // ── Loop: runs only while visible and something is moving or settling ──
+
+        let settling = true;
+        function running() { return onScreen && !document.hidden && !lost && !destroyed; }
         function moving()  { return dragging || Math.abs(vYaw) > 1e-5 || Math.abs(vPitch) > 1e-5; }
-        function animating() { return running() && (!reduced || moving()); }
+        function animating() { return running() && (!reduced || moving() || settling); }
 
         function step(dt, now) {
             if (!dragging) {
                 const decay = Math.pow(0.92, dt * 60);
                 yaw += vYaw * dt * 60; vYaw *= decay;
                 pitchOff += vPitch * dt * 60; vPitch *= decay;
-                if (!reduced && now - releasedAt > RESUME_MS) yaw += AUTO_SPIN * dt;
+                // Paused (e.g. a panel is open): no autorotate; drag inertia damps out
+                if (!reduced && !paused && now - releasedAt > RESUME_MS) yaw += AUTO_SPIN * dt;
             }
+            const kW = 1 - Math.exp(-dt / (reduced ? TAU_REDUCED : TAU_WEIGHT));
+            const kE = 1 - Math.exp(-dt / (reduced ? TAU_REDUCED : TAU_EMPHASIS));
+            const a = ease(wCur, wTarget, kW), b = ease(eCur, eTarget, kE), c = ease(mCur, mTarget, kW);
+            settling = a || b || c;
             if (Math.abs(pitchOff) > PITCH_MAX) { pitchOff = Math.sign(pitchOff) * PITCH_MAX; vPitch = 0; }
             if (!reduced) time += dt;
         }
@@ -407,21 +495,25 @@ void main() {
 
         return {
             setWeights(arr) {
-                for (let i = 0; i < ARMS; i++) weights[i] = +arr[i] || 0;
-                requestDraw();
+                for (let i = 0; i < ARMS; i++) wTarget[i] = Math.max(0, +arr[i] || 0);
+                settling = true; requestDraw();
             },
             setEmphasis(index, value) {
-                if (index >= 0 && index < ARMS) emphasis[index] = +value || 0;
-                requestDraw();
+                if (index >= 0 && index < ARMS) eTarget[index] = Math.min(Math.max(+value || 0, 0), 1);
+                settling = true; requestDraw();
+            },
+            setMotion(arr) {
+                for (let i = 0; i < ARMS; i++) mTarget[i] = Math.min(Math.max(+arr[i] || 0, 0), 1);
+                settling = true; requestDraw();
             },
             project(index) {
                 if (!(index >= 0 && index < ARMS)) return { x: 0, y: 0, depth: 1, visible: false };
                 updateMatrices();
-                const ax = anchors[index * 3], az = anchors[index * 3 + 2];
-                const c  = transform(mvp, ax, cloud.rimY, az);
+                const tip = anchorTip(index);
+                const c  = transform(mvp, tip[0], tip[1], tip[2]);
                 const nx = c[0] / c[3], ny = c[1] / c[3], nz = c[2] / c[3];
                 // Front-facing if the anchor is nearer the camera than the bowl's center
-                const facing = transform(mv, ax, cloud.rimY, az)[2] >= transform(mv, 0, cloud.rimY, 0)[2] - 0.3;
+                const facing = transform(mv, tip[0], tip[1], tip[2])[2] >= transform(mv, 0, SHAPE.RIM_Y, 0)[2] - 0.3;
                 return {
                     x: (nx * 0.5 + 0.5) * cssW,
                     y: (0.5 - ny * 0.5) * cssH,
@@ -431,8 +523,7 @@ void main() {
             },
             setPaused(value) {
                 paused = !!value;
-                if (paused) { stop(); render(); } // final frame shows the latest emphasis
-                else requestDraw();
+                requestDraw();
             },
             resize,
             destroy() {
@@ -455,5 +546,5 @@ void main() {
         };
     }
 
-    window.EconomyGL = { create };
+    window.EconomyGL = { create, SHAPE };
 }());
