@@ -1555,6 +1555,13 @@ body.hero-page .site-footer {
     display: none;
 }
 
+.economy-drivers {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--color-primary-lightest);
+}
+
 .economy-stage {
     position: relative;
     min-height: min(88vh, 760px);

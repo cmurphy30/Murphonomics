@@ -217,3 +217,29 @@ Consider adding:
 ---
 
 Built with HTML5, CSS3, and vanilla JavaScript. No frameworks or dependencies required.
+
+## Economy weights
+
+The homepage 3D cloud grows a lobe for each of its 11 arms. How big each lobe is comes from that month's economic write-up.
+
+**How they are generated.** `netlify/functions/economy-weights.js` (GET only). The first homepage visit of a month asks it for weights. If none are saved for the month yet, it reads that month's saved summary (`summary-YYYY-MM` in the `summaries` store, read-only) and asks Claude to score how central each variable was to the write-up. It validates the answer (all 11 keys, numbers clamped to 0–1, at most 3 valid drivers, caption ≤140 characters), saves it, and returns it. Every later visit that month gets the same saved copy. If there is no summary yet it returns 404 and the page uses its built-in defaults. If Claude's answer is invalid it returns 502 and saves nothing.
+
+**Store.** Netlify Blobs store `economy-weights`, key `weights-YYYY-MM` (UTC month). It never writes to the `summaries` store, because Market Updates lists everything in that store.
+
+**Schema.**
+
+```json
+{
+  "weights": {
+    "inflation": 0.8, "wages": 0.3, "participation": 0.15, "gdp": 0.4,
+    "debt_service": 0.1, "credit_spreads": 0.3, "cape": 0.15, "dxy": 0.4,
+    "real_yield": 0.5, "yield_curve": 0.6, "fed_funds": 0.95
+  },
+  "drivers": ["fed_funds", "inflation"],
+  "caption": "One sentence, at most 140 characters, about what is driving the economy this month.",
+  "month": "October 2026",
+  "generatedAt": "2026-10-24T18:00:00.000Z"
+}
+```
+
+**Regenerate for the current month.** In the Netlify dashboard open Blobs → `economy-weights`, delete the `weights-YYYY-MM` key for this month, then load the homepage. Visitors' browsers keep their copy until the month ends, so they won't see the new weights until next month unless they clear site data.

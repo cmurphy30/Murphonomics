@@ -181,6 +181,33 @@ async function fetchSummary(fred, bls, bea) {
     return data;
 }
 
+// ─── Economy weights (homepage 3D shape) ─────────────────────────────────────
+
+// GET this month's weights (scored from the monthly write-up by economy-weights).
+// Only reuses the browser's copy if it belongs to the current month.
+// Never throws — returns null on any failure so the page keeps its defaults.
+async function fetchEconomyWeights() {
+    try {
+        const cached    = getFromCache('weights', SUMMARY_CACHE_TTL_MS);
+        const thisMonth = new Date().toISOString().slice(0, 7);
+        if (cached && cached.generatedAt && cached.generatedAt.slice(0, 7) === thisMonth) return cached;
+
+        const response = await fetch('/.netlify/functions/economy-weights', {
+            headers: { 'x-site-token': SITE_TOKEN }
+        });
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        if (!data || data.error || !data.weights) return null;
+
+        saveToCache('weights', data);
+        return data;
+    } catch (err) {
+        console.warn('[data-service] economy weights unavailable:', err.message);
+        return null;
+    }
+}
+
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 /**

@@ -62,7 +62,8 @@ const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').mat
 const shape = {
     weights: { ...DEFAULT_WEIGHTS },
     motion:  Object.fromEntries(ARMS.map(a => [a.key, 0])),
-    cloud:   null
+    cloud:   null,
+    onChange: null // debug panel hook
 };
 
 function toArray(obj) { return ARMS.map(a => obj[a.key] || 0); }
@@ -89,6 +90,7 @@ window.Economy = {
     setWeights(obj) {
         mergeValues(shape.weights, obj);
         if (shape.cloud) shape.cloud.setWeights(toArray(shape.weights));
+        if (shape.onChange) shape.onChange();
     },
     setMotion(obj) {
         if (REDUCED_MOTION) return; // no motion layer under reduced motion
@@ -128,7 +130,38 @@ window.addEventListener('murphonomics:data', e => {
         catch (_) { motion[key] = 0; }
     });
     window.Economy.setMotion(motion);
+    loadMonthlyWeights();
 });
+
+// ── Monthly weights + caption (scored from the write-up by economy-weights) ──
+// Runs once, after the live data has loaded so it never competes with charts.
+// Any failure keeps DEFAULT_WEIGHTS and hides the caption.
+
+let weightsRequested = false;
+
+async function loadMonthlyWeights() {
+    if (weightsRequested || typeof fetchEconomyWeights !== 'function') return;
+    weightsRequested = true;
+    const captionEl = document.getElementById('economyCaption');
+    try {
+        const result = await fetchEconomyWeights();
+        if (!result || !result.weights) throw new Error('no weights');
+        window.Economy.setWeights(result.weights);
+        if (!captionEl) return;
+        captionEl.textContent = typeof result.caption === 'string' ? result.caption : '';
+        const titles = (Array.isArray(result.drivers) ? result.drivers : [])
+            .map(key => (ARMS.find(a => a.key === key) || {}).title)
+            .filter(Boolean);
+        if (titles.length) {
+            const drivers = document.createElement('span');
+            drivers.className = 'economy-drivers';
+            drivers.textContent = 'Driving this month: ' + titles.join(' and ');
+            captionEl.appendChild(drivers);
+        }
+    } catch (_) {
+        if (captionEl) captionEl.textContent = ''; // :empty hides it
+    }
+}
 
 const OPEN_DELAY  = 120; // hover intent
 const CLOSE_GRACE = 250;
@@ -434,6 +467,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         panel.appendChild(row);
     });
+    // Keep sliders in sync when weights change elsewhere (e.g. monthly weights arrive)
+    shape.onChange = () => {
+        panel.querySelectorAll('.weights-debug-row').forEach((row, i) => {
+            const input = row.querySelector('input');
+            input.value = shape.weights[ARMS[i].key];
+            row.querySelector('output').textContent = (+input.value).toFixed(2);
+        });
+    };
+
     const log = document.createElement('button');
     log.type = 'button';
     log.textContent = 'log JSON';
