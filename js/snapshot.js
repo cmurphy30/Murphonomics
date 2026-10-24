@@ -1,8 +1,9 @@
 /**
- * snapshot.js — Economic Snapshot section renderer for index.html
+ * snapshot.js — Economic Snapshot renderer for index.html and dashboard.html
  *
  * Fetches live data via data-service.js, then builds five compact chart panels
- * and an AI-generated written summary in the #snapshotSection on the homepage.
+ * and the AI-generated written summary. Panels or summary elements missing
+ * from the current page are skipped.
  *
  * Load order in HTML (required):
  *   1. Chart.js CDN
@@ -196,6 +197,7 @@
     // Dashed reference line at 2% (Fed's inflation target)
 
     function renderInflation(bls, fred) {
+        if (!document.getElementById('chartInflation')) return; // panel not on this page
         const fullRef  = (bls && bls.headlineCPIYoY) || [];
         const fullCore = alignValues(fullRef, bls && bls.coreCPIYoY);
         const fullPce  = alignValues(fullRef, fred && fred.pcepiyoy);
@@ -261,6 +263,7 @@
     // Fill between the lines makes the gap visually obvious
 
     function renderWages(bls) {
+        if (!document.getElementById('chartWages')) return; // panel not on this page
         const fullNominal = computeYoY(bls && bls.avgHourlyEarnings);
         const realYoY     = (bls && bls.realWageGrowth) || [];
         const fullAligned = alignValues(fullNominal, realYoY);
@@ -320,6 +323,7 @@
     // Daily series collapsed to monthly — higher = stronger dollar
 
     function renderDollarIndex(fred) {
+        if (!document.getElementById('chartDollarIndex')) return; // panel not on this page
         const fullRaw = toMonthlyLast((fred && fred.dollarIndex) || []);
         const L       = latest(fullRaw);
 
@@ -368,6 +372,7 @@
     // ── Panel 4: Fed Funds Rate ────────────────────────────────────────────
 
     function renderFed(fred) {
+        if (!document.getElementById('chartFed')) return; // panel not on this page
         const fullRaw = (fred && fred.fedfunds) || [];
         const L       = latest(fullRaw);
 
@@ -419,6 +424,7 @@
     const CAPE_HIST_AVG = 16.8;
 
     function renderCAPE(fred) {
+        if (!document.getElementById('chartCAPE')) return; // panel not on this page
         const fullData = (fred && fred.cape) || [];
         const L        = latest(fullData);
 
@@ -476,6 +482,7 @@
     // Quarterly bar chart; recession-period bars shaded light red
 
     function renderGDP(bea, fred) {
+        if (!document.getElementById('chartGDP')) return; // panel not on this page
         const allData = (bea && bea.realGDP) || [];
         const recSet  = buildRecessionSet(fred && fred.recession);
         const L       = latest(allData);
@@ -567,6 +574,7 @@
     // Fill below zero in red — an inverted curve historically precedes recessions
 
     function renderYieldCurve(fred) {
+        if (!document.getElementById('chartYieldCurve')) return; // panel not on this page
         const fullRaw = toMonthlyLast((fred && fred.yieldCurveSpread) || []);
         const L       = latest(fullRaw);
 
@@ -616,6 +624,7 @@
     // Monthly BLS series — % of working-age population employed or actively seeking work
 
     function renderLFPR(bls) {
+        if (!document.getElementById('chartLFPR')) return; // panel not on this page
         const fullRaw = (bls && bls.lfpr) || [];
         const L       = latest(fullRaw);
 
@@ -665,6 +674,7 @@
     // 10-year TIPS real yield vs. market-implied breakeven inflation expectation
 
     function renderRealYield(fred) {
+        if (!document.getElementById('chartRealYield')) return; // panel not on this page
         const fullRealYield = toMonthlyLast((fred && fred.realYield10y)       || []);
         const fullBreakeven = toMonthlyLast((fred && fred.breakevenInflation) || []);
         const fullAligned   = alignValues(fullRealYield, fullBreakeven);
@@ -719,6 +729,7 @@
     // Periods where HY OAS > 600 bps are shaded red (market stress signal)
 
     function renderCreditSpreads(fred) {
+        if (!document.getElementById('chartCreditSpreads')) return; // panel not on this page
         const fullHy      = toMonthlyLast((fred && fred.hySpread) || []);
         const fullIg      = toMonthlyLast((fred && fred.igSpread) || []);
         const fullIgAlign = alignValues(fullHy, fullIg);
@@ -814,6 +825,7 @@
     // % of disposable income going to debt payments — rising = consumer stress
 
     function renderDebtService(fred) {
+        if (!document.getElementById('chartDebtService')) return; // panel not on this page
         const fullData = (fred && fred.debtServiceRatio) || [];
         const L        = latest(fullData);
 
@@ -894,9 +906,9 @@
             .map(p => `<p>${p.trim()}</p>`)
             .join('');
 
-        textEl.innerHTML = html;
+        if (textEl) textEl.innerHTML = html;
 
-        if (summaryData.generatedAt) {
+        if (metaEl && summaryData.generatedAt) {
             const d = new Date(summaryData.generatedAt);
             metaEl.textContent = 'Generated: ' + d.toLocaleDateString('en-US', {
                 month: 'long', day: 'numeric', year: 'numeric'

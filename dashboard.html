@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Murphonomics - Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css?v=12">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        /* The grid was designed for the blue homepage; a light surface keeps
+           the white chart cards from blending into a white page. */
+        .page-content {
+            background: var(--color-surface);
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-blue-medium) 50%, var(--color-primary) 100%);
+            padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .dashboard-header h1 {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--color-background);
+            letter-spacing: -0.5px;
+            margin-bottom: 0.4rem;
+        }
+
+        .dashboard-header p {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.82);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                padding: var(--spacing-lg);
+            }
+
+            .dashboard-header h1 {
+                font-size: 1.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-body">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <nav class="sidenav">
+        <a href="index.html" class="sidenav-logo">
+            <span class="sidenav-logo-mark">M</span>
+            <span class="sidenav-label">Murphonomics</span>
+        </a>
+        <ul class="sidenav-menu">
+            <li>
+                <a href="index.html#home" class="sidenav-link">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+                    <span class="sidenav-label">Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="dashboard.html" class="sidenav-link active">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+                    <span class="sidenav-label">Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="market-updates.html" class="sidenav-link">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
+                    <span class="sidenav-label">Market Updates</span>
+                </a>
+            </li>
+            <li>
+                <a href="https://murphonomics.substack.com/" target="_blank" rel="noopener noreferrer" class="sidenav-link">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
+                    <span class="sidenav-label">Substack</span>
+                </a>
+            </li>
+            <li>
+                <a href="books.html" class="sidenav-link">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></span>
+                    <span class="sidenav-label">Books, Podcasts & Stuff</span>
+                </a>
+            </li>
+            <li>
+                <a href="about.html" class="sidenav-link">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+                    <span class="sidenav-label">About</span>
+                </a>
+            </li>
+            <li>
+                <a href="#discord" class="sidenav-link">
+                    <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
+                    <span class="sidenav-label">Discord</span>
+                </a>
+            </li>
+        </ul>
+        <div class="sidenav-social">
+            <a href="https://twitter.com" class="sidenav-social-link" title="X / Twitter">
+                <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></span>
+                <span class="sidenav-label">X / Twitter</span>
+            </a>
+            <a href="https://linkedin.com" class="sidenav-social-link" title="LinkedIn">
+                <span class="sidenav-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg></span>
+                <span class="sidenav-label">LinkedIn</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="page-content">
+
+    <!-- PAGE HEADER -->
+    <header class="dashboard-header">
+        <h1>Dashboard</h1>
+        <p>Live U.S. economic data</p>
+    </header>
+
+    <!-- ECONOMIC SNAPSHOT SECTION -->
+    <section class="snapshot-section">
+
+        <!-- Shown while getData() is running; replaced by the grid once data arrives -->
+        <div class="snapshot-loading-overlay" id="snapshotLoading">
+            <div class="spinner"></div>
+            <span>Loading live economic data…</span>
+        </div>
+
+        <!-- Bento free-form chart panels (hidden until data loads) -->
+        <div class="snapshot-grid" id="snapshotGrid" style="display:none">
+
+            <!-- Panel 1: Inflation — hero -->
+            <div class="snapshot-panel snap-inflation">
+                <p class="panel-title">Inflation Comparison</p>
+                <p class="panel-latest-value" id="latestInflation">--</p>
+                <p class="panel-updated" id="updatedInflation">Last updated: --</p>
+                <div class="range-toggle" id="inflation-range-toggle">
+                    <button class="range-btn" data-years="1">1Y</button>
+                    <button class="range-btn active" data-years="5">5Y</button>
+                </div>
+                <div class="panel-chart-wrap">
+                    <canvas id="chartInflation"></canvas>
+                </div>
+            </div>
+
+            <!-- Panel 2: Real GDP Growth — wide, with time-range toggle -->
+            <div class="snapshot-panel snap-gdp">
+                <p class="panel-title">Real GDP Growth</p>
+                <p class="panel-latest-value" id="latestGDP">--</p>
+                <p class="panel-updated" id="updatedGDP">Last updated: --</p>
+                <div class="range-toggle" id="gdp-range-toggle">
+                    <button class="range-btn" data-years="1">1Y</button>
+                    <button class="range-btn" data-years="5">5Y</button>
+                    <button class="range-btn active" data-years="10">10Y</button>
+                </div>
+                <div class="panel-chart-wrap">
+                    <canvas id="chartGDP"></canvas>
+                </div>
+            </div>
+
+            <!-- Panel 3: Wages -->
+            <div class="snapshot-panel snap-wages">
+                <p class="panel-title">Real vs. Nominal Wage Growth</p>
+                <p class="panel-latest-value" id="latestWages">--</p>
+                <p class="panel-updated" id="updatedWages">Last updated: --</p>
+                <div class="range-toggle" id="wages-range-toggle">
+                    <button class="range-btn" data-years="1">1Y</button>
+                    <button class="range-btn active" data-years="5">5Y</button>
+                </div>
+                <div class="panel-chart-wrap">
+                    <canvas id="chartWages"></canvas>
+                </div>
+            </div>
+
+            <!-- Panel 4: LFPR -->
+            <div class="snapshot-panel snap-lfpr">
+                <p class="panel-title">Labor Force Participation Rate</p>
+                <p class="panel-latest-value" id="latestLFPR">--</p>
+                <p class="panel-updated" id="updatedLFPR">Last updated: --</p>
+                <div class="range-toggle" id="lfpr-range-toggle">
+                    <button class="range-btn" data-years="1">1Y</button>
+                    <button class="range-btn active" data-years="5">5Y</button>
+                </div>
+                <div class="panel-chart-wrap">
+                    <canvas id="chartLFPR"></canvas>
+                </div>
+            </div>
+
+            <!-- Blurb break: CPI insight + LFPR insight -->
+            <div class="snap-blurb snap-blurb-cpi">
+                <p class="blurb-label">CPI Trend</p>
+                <p class="blurb-text blurb-loading" id="blurbCPI">Loading insight&hellip;</p>
+            </div>
+            <div class="snap-blurb snap-blurb-lfpr">
+                <p class="blurb-label">Labor Force</p>
+                <p class="blurb-text blurb-loading" id="blurbLFPR">Loading insight&hellip;</p>
+            </div>
+
+            <!-- Panel 5: Yield Curve — full-width banner -->
+            <div class="snapshot-panel snap-yield">
+                <p class="panel-title">10Y–2Y Yield Curve Spread</p>
+                <p class="panel-latest-value" id="latestYieldCurve">--</p>
+                <p class="panel-updated" id="updatedYieldCurve">Last updated: --</p>
+                <div class="range-toggle" id="yield-range-toggle">
+                    <button class="range-btn" data-years="1">1Y</button>
+                    <button class="range-btn active" data-years="5">5Y</button>
+                </div>
+                <div class="panel-chart-wrap">
+                    <canvas id="chartYieldCurve"></canvas>
+                </div>
+            </div>
+
+            <!-- Panel 6: Fed Funds Rate -->
+            <div class="snapshot-panel snap-fed">
+                <p class="panel-title">Fed Funds Rate</p>
+                <p class="panel-latest-value" id="latestFed">--</p>
+                <p class="panel-updated" id="updatedFed">Last updated: --</p>
+                <div class="range-toggle" id="fed-range-toggle">
+                    <button class="range-btn" data-years="1">1Y</button>
+                    <button class="range-btn active" data-years="5">5Y</button>
+                </div>
+                <div class="panel-chart-wrap">
+                    <canvas id="chartFed"></canvas>
+                </div>
+            </div>
+
+            <!-- Panel 7: Real Yield & Breakeven Inflation -->
+            <div class="snapshot-panel snap-realyield">
+                <p class="panel-title">Real Yield &amp; Breakeven Inflation</p>
+                <p class="panel-latest-value" id="latestRealYield">--</p>
+                <p class="panel-updated" id="updatedRealYield">Last updated: --</p>
+                <div class="range-toggle" id="realyield-range-toggle">
+                    <button class="range-btn" data-years="1">1Y</button>
+                    <button class="range-btn active" data-years="5">5Y</button>
+                </div>
+                <div class="panel-chart-wrap">
+                    <canvas id="chartRealYield"></canvas>
+                </div>
+            </div>
+
+            <!-- Panel 8: Shiller CAPE Ratio -->
+            <div class="snapshot-panel snap-cape">
+                <p class="panel-title">Shiller CAPE Ratio</p>
+                <p class="panel-latest-value" id="latestCAPE">--</p>
+                <p class="panel-updated" id="updatedCAPE">Last updated: --</p>
+                <div class="range-toggle" id="cape-range-toggle">
+                    <button class="range-btn" data-years="1">1Y</button>
+                    <button class="range-btn active" data-years="5">5Y</button>
+                </div>
+                <div class="panel-chart-wrap">
+                    <canvas id="chartCAPE"></canvas>
+                </div>
+            </div>
+
+            <!-- Blurb break: DXY insight full-width -->
+            <div class="snap-blurb snap-blurb-dxy">
+                <p class="blurb-label">U.S. Dollar</p>
+                <p class="blurb-text blurb-loading" id="blurbDXY">Loading insight&hellip;</p>
+            </div>
+
+            <!-- Panel 9: U.S. Dollar Index (DXY) -->
+            <div class="snapshot-panel snap-dxy">
+                <p class="panel-title">U.S. Dollar Index (DXY)</p>
+                <p class="panel-latest-value" id="latestDollarIndex">--</p>
+                <p class="panel-updated" id="updatedDollarIndex">Last updated: --</p>
+                <div class="range-toggle" id="dxy-range-toggle">
+                    <button class="range-btn" data-years="1">1Y</button>
+                    <button class="range-btn active" data-years="5">5Y</button>
+                </div>
+                <div class="panel-chart-wrap">
+                    <canvas id="chartDollarIndex"></canvas>
+                </div>
+            </div>
+
+            <!-- Panel 10: Credit Spreads (OAS) -->
+            <div class="snapshot-panel snap-creditspreads">
+                <p class="panel-title">Credit Spreads (OAS)</p>
+                <p class="panel-latest-value" id="latestCreditSpreads">--</p>
+                <p class="panel-updated" id="updatedCreditSpreads">Last updated: --</p>
+                <div class="range-toggle" id="creditspreads-range-toggle">
+                    <button class="range-btn" data-years="1">1Y</button>
+                    <button class="range-btn active" data-years="5">5Y</button>
+                </div>
+                <div class="panel-chart-wrap">
+                    <canvas id="chartCreditSpreads"></canvas>
+                </div>
+            </div>
+
+            <!-- Panel 11: Household Debt Service Ratio -->
+            <div class="snapshot-panel snap-debtservice">
+                <p class="panel-title">Household Debt Service Ratio</p>
+                <p class="panel-latest-value" id="latestDebtService">--</p>
+                <p class="panel-updated" id="updatedDebtService">Last updated: --</p>
+                <div class="range-toggle" id="debtservice-range-toggle">
+                    <button class="range-btn" data-years="1">1Y</button>
+                    <button class="range-btn active" data-years="5">5Y</button>
+                </div>
+                <div class="panel-chart-wrap">
+                    <canvas id="chartDebtService"></canvas>
+                </div>
+            </div>
+
+        </div><!-- /.snapshot-grid -->
+
+    </section><!-- /.snapshot-section -->
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+        <p>&copy; 2025 Murphonomics. Data sourced from Federal Reserve Economic Data (FRED).</p>
+        <p class="footer-disclaimer">For informational purposes only. Nothing on this site constitutes financial, investment, or legal advice. All opinions are my own. Always consult a qualified financial professional before acting on any information presented here.</p>
+    </footer>
+
+    </div><!-- /.page-content -->
+    </div><!-- /.page-body -->
+
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="js/cache.js?v=3"></script>
+    <script src="js/data-service.js?v=4"></script>
+    <script src="js/snapshot.js?v=4"></script>
+
+    <!-- MOBILE BOTTOM NAVIGATION (hidden on desktop via CSS) -->
+    <nav class="mobile-bottom-nav">
+        <a href="index.html#home" class="mobile-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <span class="mobile-nav-label">Home</span>
+        </a>
+        <a href="dashboard.html" class="mobile-nav-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span class="mobile-nav-label">Dashboard</span>
+        </a>
+        <a href="market-updates.html" class="mobile-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span class="mobile-nav-label">Updates</span>
+        </a>
+        <a href="https://murphonomics.substack.com/" target="_blank" rel="noopener noreferrer" class="mobile-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <span class="mobile-nav-label">Substack</span>
+        </a>
+        <a href="books.html" class="mobile-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+            <span class="mobile-nav-label">Books</span>
+        </a>
+        <a href="about.html" class="mobile-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span class="mobile-nav-label">About</span>
+        </a>
+    </nav>
+</body>
+</html>

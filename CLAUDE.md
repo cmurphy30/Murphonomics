@@ -4,23 +4,25 @@
 A personal economics blog and website at murphonomics.com. Built with vanilla HTML, CSS, and JavaScript — no front-end frameworks, no build tools, no front-end package manager.
 
 ## File Structure
-- `index.html` — homepage (hero animation + economic snapshot charts and the monthly AI summary)
+- `index.html` — homepage (hero animation, About section, 3D economy stage, monthly AI summary + Substack)
+- `dashboard.html` — dashboard page (bento grid of live economic charts)
 - `market-updates.html` — archive of monthly AI summaries
 - `books.html` — books and podcasts page
-- `about.html` — about page (text is written directly in the HTML)
+- `about.html` — about page (text is written directly in the HTML; the homepage About section loads its `.about-card` at runtime)
 - `economic-blog/substack.html` — Substack page
 - `css/styles.css` — all site styles (design tokens are CSS variables in `:root`)
 - `js/script.js` — main JavaScript (includes the hero animation: `initHeroAnimation` / `startHeroCanvas`)
 - `js/cache.js` — localStorage cache helpers
 - `js/data-service.js` — fetches FRED/BLS/BEA data and the monthly summary
-- `js/snapshot.js` — builds the homepage charts and renders the summary
+- `js/snapshot.js` — builds the charts and renders the summary (skips anything not on the current page)
+- `js/home-about.js` — injects the About card on the homepage and reveals it on scroll
 - `js/substack-page.js` — Substack page script
 - `netlify/functions/` — serverless functions: `fred-data.js`, `bls-data.js`, `bea-data.js`, `economic-summary.js`, `get-summaries.js`
 - `images/` — book and podcast cover images
 - `economic-blog/STYLE_GUIDE.md` — design system (colors, fonts, spacing)
 
 ## Tech Rules
-- No front-end frameworks, libraries, or npm packages. The only external front-end library is Chart.js, loaded from a CDN (jsDelivr) on `index.html`.
+- No front-end frameworks, libraries, or npm packages. The only external front-end library is Chart.js, loaded from a CDN (jsDelivr) on `index.html` and `dashboard.html`.
 - No build steps. Files are served directly as-is.
 - Front-end changes are plain HTML, CSS, or vanilla JavaScript only.
 - JS and CSS files are cache-busted with `?v=` query strings on their `<script>`/`<link>` tags.
@@ -58,7 +60,7 @@ The site is hosted on Netlify (see `netlify.toml`) and deploys when changes are 
 - No new libraries (no Three.js, no npm packages in the front end). The 3D is raw WebGL in vanilla JS.
 - Colors/fonts: use only the CSS variables in :root. No new colors. Other pages (market-updates, books, about) must look identical.
 - Do not edit economic-summary.js, get-summaries.js, or the hero animation (initHeroAnimation / startHeroCanvas) unless a prompt says so.
-- Charts keep working exactly as today. Never re-create chart instances; move DOM nodes and call Chart.getChart(canvas).resize().
+- Charts keep working exactly as today. Chart panel markup lives statically in the arm dropdowns on index.html and in the bento grid on dashboard.html (same ids, one page each). Never re-create chart instances.
 - Whenever you edit a CSS/JS file, bump its ?v= query string in every HTML file that loads it.
 - Respect prefers-reduced-motion. All interactive elements keyboard reachable.
 - If a prompt conflicts with what you find in the code, STOP and ask.
