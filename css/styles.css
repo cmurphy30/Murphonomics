@@ -1554,6 +1554,12 @@ body.hero-page .site-footer {
     min-height: min(88vh, 760px);
 }
 
+/* Point cloud canvas (created by js/economy-gl.js) — visible focus ring for keyboard users */
+.economy-stage canvas:focus-visible {
+    outline: 2px solid var(--color-primary-lightest);
+    outline-offset: -2px;
+}
+
 /* Lift above #heroCanvas like the other homepage sections */
 body.hero-page .about-section,
 body.hero-page .economy-section {
